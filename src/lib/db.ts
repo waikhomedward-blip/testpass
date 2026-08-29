@@ -58,12 +58,31 @@ export async function getSession(id: string): Promise<SessionWithEvidence | null
 
 export async function markSessionStarted(id: string): Promise<void> {
   const db = getSupabaseAdmin();
-  const { data } = await db.from("sessions").select("status,started_at").eq("id", id).maybeSingle();
-  if (!data || data.started_at) return;
-  await db
+  const { data, error: selectError } = await db
+    .from("sessions")
+    .select("status,started_at")
+    .eq("id", id)
+    .maybeSingle();
+  if (selectError) {
+    // Previously this silently returned here, discarding the error entirely
+    // — the buyer would then be stuck seeing "NOT STARTED" forever even
+    // though the seller had the page open and was actively testing, with no
+    // trace of why in the logs. We don't know from a failed read whether
+    // the session was already started, but attempting the update below is
+    // harmless either way (it's a no-op once started_at is already set by
+    // a previous successful call), so we log and fall through instead of
+    // bailing out.
+    console.error("markSessionStarted: couldn't read session:", selectError.message);
+  } else if (data?.started_at) {
+    return; // already started — don't clobber the original started_at
+  }
+  const { error: updateError } = await db
     .from("sessions")
     .update({ status: "IN_PROGRESS", started_at: new Date().toISOString() })
     .eq("id", id);
+  if (updateError) {
+    console.error("markSessionStarted: couldn't update session:", updateError.message);
+  }
 }
 
 export async function recordEvidenceAndComplete(input: {

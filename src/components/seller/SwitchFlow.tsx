@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CATEGORY_CONFIG } from "@/lib/primitives";
+import { submitCapture } from "@/lib/submit-capture";
 import StepIndicator from "./StepIndicator";
 import SubmittedScreen from "./SubmittedScreen";
 import { useCamera } from "./useCamera";
@@ -80,21 +81,15 @@ export default function SwitchFlow({ sessionId }: { sessionId: string }) {
       if (productPhoto) {
         images.push({ base64: productPhoto, mediaType: "image/jpeg", filename: "product-photo.jpg" });
       }
-      const res = await fetch("/api/sessions/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sessionId,
-          images,
-          context: productPhoto
-            ? "The final image is a general photo of the whole Switch — not part of the calibration burst."
-            : "",
-          rawData: { frameCount: frames.length, burstIntervalMs: BURST_INTERVAL_MS, hasProductPhoto: !!productPhoto },
-        }),
+      const { verdict } = await submitCapture({
+        sessionId,
+        images,
+        context: productPhoto
+          ? "The final image is a general photo of the whole Switch — not part of the calibration burst."
+          : "",
+        rawData: { frameCount: frames.length, burstIntervalMs: BURST_INTERVAL_MS, hasProductPhoto: !!productPhoto },
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Submission failed.");
-      setVerdict(data.verdict ?? null);
+      setVerdict(verdict);
       setPhase("done");
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Submission failed.");

@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 import { CATEGORY_CONFIG } from "@/lib/primitives";
 import { newChallengeCode } from "@/lib/challenge";
+import { resizeImageFile } from "@/lib/image-resize";
+import { submitCapture } from "@/lib/submit-capture";
 import StepIndicator from "./StepIndicator";
 import SubmittedScreen from "./SubmittedScreen";
 import ProductPhotoStage from "./ProductPhotoStage";
@@ -16,18 +18,6 @@ interface Shot {
   label: "Wide" | "Zoom";
   base64: string;
   previewUrl: string;
-}
-
-function readFileAsBase64(file: File): Promise<{ base64: string; previewUrl: string }> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("Couldn't read that file."));
-    reader.onload = () => {
-      const result = reader.result as string;
-      resolve({ base64: result.split(",")[1] ?? "", previewUrl: result });
-    };
-    reader.readAsDataURL(file);
-  });
 }
 
 export default function DigicamFlow({ sessionId }: { sessionId: string }) {
@@ -47,12 +37,16 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
     if (!file) return;
     setReadError(null);
     try {
-      const { base64, previewUrl } = await readFileAsBase64(file);
+      // Photos picked from a phone's library can be several megabytes at
+      // full resolution — resized here, before they ever leave the phone,
+      // so two or three of them never come close to the submit endpoint's
+      // request-size ceiling. See src/lib/image-resize.ts.
+      const { base64, previewUrl } = await resizeImageFile(file);
       const shot: Shot = { label, base64, previewUrl };
       if (label === "Wide") setWide(shot);
       else setZoom(shot);
-    } catch {
-      setReadError("Couldn't read that photo. Try picking it again.");
+    } catch (err) {
+      setReadError(err instanceof Error ? err.message : "Couldn't read that photo. Try picking it again.");
     }
   }
 
@@ -80,21 +74,15 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
       if (productPhoto) {
         images.push({ base64: productPhoto, mediaType: "image/jpeg", filename: "product-photo.jpg" });
       }
-      const res = await fetch("/api/sessions/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sessionId,
-          images,
-          context: `Expected one-time code: ${code}. First image is the WIDE shot, second image is the ZOOM shot.${
-            productPhoto ? " The third image is a general photo of the whole camera — not part of the zoom test." : ""
-          }`,
-          rawData: { expectedCode: code, hasProductPhoto: !!productPhoto },
-        }),
+      const { verdict } = await submitCapture({
+        sessionId,
+        images,
+        context: `Expected one-time code: ${code}. First image is the WIDE shot, second image is the ZOOM shot.${
+          productPhoto ? " The third image is a general photo of the whole camera — not part of the zoom test." : ""
+        }`,
+        rawData: { expectedCode: code, hasProductPhoto: !!productPhoto },
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Submission failed.");
-      setVerdict(data.verdict ?? null);
+      setVerdict(verdict);
       setPhase("done");
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Submission failed.");

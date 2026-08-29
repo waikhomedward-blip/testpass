@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Category } from "@/lib/types";
 import { CategoryConfig } from "@/lib/primitives";
+import { addSessionToHistory } from "@/lib/session-history";
 import SessionStatus from "./SessionStatus";
 
 export default function NewSessionForm({ config }: { config: CategoryConfig }) {
@@ -62,6 +63,7 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong.");
+      addSessionToHistory({ id: data.id, category: config.category, createdAt: new Date().toISOString() });
       setCreated({ id: data.id });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -129,7 +131,12 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
           <a href={`/buyer/session/${created.id}`} className="text-accent hover:underline">
             this direct link
           </a>{" "}
-          if you want to come back later on another device.
+          if you want to come back later on another device. Testing more than one device? Every test
+          you create in this browser is also listed on{" "}
+          <a href="/buyer/mine" className="text-accent hover:underline">
+            My tests
+          </a>
+          .
         </p>
       </div>
     );
