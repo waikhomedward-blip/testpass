@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Category } from "@/lib/types";
 import { CategoryConfig } from "@/lib/primitives";
@@ -13,6 +13,38 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<{ id: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+    };
+  }, []);
+
+  async function copySellerUrl(url: string) {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        // Fallback for browsers without the async Clipboard API.
+        const el = document.createElement("textarea");
+        el.value = url;
+        el.style.position = "fixed";
+        el.style.opacity = "0";
+        document.body.appendChild(el);
+        el.focus();
+        el.select();
+        document.execCommand("copy");
+        document.body.removeChild(el);
+      }
+      setCopied(true);
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+      copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // If copying silently fails, the text is still selected/visible for a manual copy.
+    }
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -61,12 +93,32 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
           />
           <button
             type="button"
-            onClick={() => navigator.clipboard?.writeText(sellerUrl)}
-            className="rounded-lg bg-accent px-3 py-2 text-sm font-medium text-white hover:opacity-90"
+            onClick={() => copySellerUrl(sellerUrl)}
+            className={`flex w-[92px] shrink-0 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              copied ? "bg-green-600 text-white" : "bg-accent text-white hover:opacity-90"
+            }`}
           >
-            Copy
+            {copied ? (
+              <>
+                <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 shrink-0">
+                  <path
+                    d="M4 10.5l3.5 3.5L16 5.5"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                Copied
+              </>
+            ) : (
+              "Copy"
+            )}
           </button>
         </div>
+        <p className="mt-1.5 text-xs text-foreground/40" role="status" aria-live="polite">
+          {copied ? "Link copied to clipboard." : ""}
+        </p>
         <button
           type="button"
           onClick={() => router.push(`/buyer/session/${created.id}`)}
