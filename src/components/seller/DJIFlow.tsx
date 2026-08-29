@@ -103,6 +103,7 @@ export default function DJIFlow({ sessionId }: { sessionId: string }) {
   if (phase === "instructions") {
     return (
       <div className="space-y-4">
+        <StepIndicator steps={STEPS} current={0} />
         <ol className="list-decimal space-y-2 pl-5 text-sm">
           {config.sellerInstructions.map((step, i) => (
             <li key={i}>{step}</li>
