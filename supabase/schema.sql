@@ -36,6 +36,15 @@ create table if not exists evidence (
   association_strength text
     check (association_strength in ('STRONG', 'MODERATE', 'WEAK', 'INCONCLUSIVE')),
   raw_data jsonb,
+  -- Storage paths (in the `captures` bucket) for every image submitted with
+  -- this evidence, so the buyer's results page can show what the seller
+  -- actually captured, not just the verdict. [{"path": "...", "filename": "..."}]
+  image_paths jsonb,
+  -- Optional one-sentence, purely descriptive note about the physical
+  -- device's visible cosmetic condition, from the product-photo step. Never
+  -- influences verdict or association_strength — see PRODUCT_PHOTO_ADDENDUM
+  -- in src/lib/primitives.ts.
+  cosmetic_note text,
   created_at timestamptz not null default now()
 );
 
@@ -65,3 +74,9 @@ grant select, insert, update, delete on public.evidence to service_role;
 grant usage, select on all sequences in schema public to service_role;
 alter default privileges in schema public grant select, insert, update, delete on tables to service_role;
 alter default privileges in schema public grant usage, select on sequences to service_role;
+
+-- Migration for projects that already ran an earlier version of this file
+-- (before image_paths / cosmetic_note existed on evidence). Safe to
+-- re-run — both are no-ops if the columns are already there.
+alter table evidence add column if not exists image_paths jsonb;
+alter table evidence add column if not exists cosmetic_note text;

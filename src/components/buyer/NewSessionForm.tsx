@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Category } from "@/lib/types";
 import { CategoryConfig } from "@/lib/primitives";
+import SessionStatus from "./SessionStatus";
 
 export default function NewSessionForm({ config }: { config: CategoryConfig }) {
-  const router = useRouter();
   const [listingUrl, setListingUrl] = useState("");
   const [model, setModel] = useState("");
   const [notes, setNotes] = useState("");
@@ -119,13 +118,19 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
         <p className="mt-1.5 text-xs text-foreground/40" role="status" aria-live="polite">
           {copied ? "Link copied to clipboard." : ""}
         </p>
-        <button
-          type="button"
-          onClick={() => router.push(`/buyer/session/${created.id}`)}
-          className="mt-6 w-full rounded-lg border border-border py-2 text-sm font-medium hover:bg-background"
-        >
-          Go to my results page →
-        </button>
+
+        <div className="mt-6 border-t border-border pt-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-foreground/50">Test status</p>
+          <SessionStatus sessionId={created.id} />
+        </div>
+
+        <p className="mt-4 text-xs text-foreground/40">
+          Bookmark this page, or keep{" "}
+          <a href={`/buyer/session/${created.id}`} className="text-accent hover:underline">
+            this direct link
+          </a>{" "}
+          if you want to come back later on another device.
+        </p>
       </div>
     );
   }

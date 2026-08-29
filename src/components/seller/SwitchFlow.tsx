@@ -1,70 +1,48 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { CATEGORY_CONFIG } from "@/lib/primitives";
 import StepIndicator from "./StepIndicator";
+import { useCamera } from "./useCamera";
+import CameraStage from "./CameraStage";
+import ProductPhotoStage from "./ProductPhotoStage";
 
 const config = CATEGORY_CONFIG.switch;
 const BURST_COUNT = 5;
 const BURST_INTERVAL_MS = 500;
-const STEPS = ["Instructions", "Record", "Review", "Submit"];
+const STEPS = ["Instructions", "Record", "Product photo", "Review", "Submit"];
 
-type Phase = "instructions" | "camera-error" | "ready" | "countdown" | "capturing" | "review" | "submitting" | "done" | "submit-error";
+type Phase =
+  | "instructions"
+  | "ready"
+  | "countdown"
+  | "capturing"
+  | "product-photo"
+  | "review"
+  | "submitting"
+  | "done"
+  | "submit-error";
 
 export default function SwitchFlow({ sessionId }: { sessionId: string }) {
   const [phase, setPhase] = useState<Phase>("instructions");
   const [countdown, setCountdown] = useState(3);
   const [frames, setFrames] = useState<string[]>([]); // base64 (no data: prefix)
+  const [productPhoto, setProductPhoto] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-
-  useEffect(() => {
-    return () => {
-      streamRef.current?.getTracks().forEach((t) => t.stop());
-    };
-  }, []);
-
-  async function startCamera() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1280 } },
-        audio: false,
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
-      setPhase("ready");
-    } catch {
-      setPhase("camera-error");
-    }
-  }
+  const { videoRef, canvasRef, state: cameraState, videoReady, setVideoReady, start, stop, capture } = useCamera();
 
   async function captureBurst() {
     setPhase("capturing");
     const shots: string[] = [];
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
     for (let i = 0; i < BURST_COUNT; i++) {
-      if (video && canvas) {
-        canvas.width = video.videoWidth || 1280;
-        canvas.height = video.videoHeight || 720;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
-          shots.push(dataUrl.split(",")[1]);
-        }
-      }
+      const shot = capture(0.82);
+      if (shot) shots.push(shot);
       await new Promise((r) => setTimeout(r, BURST_INTERVAL_MS));
     }
-    streamRef.current?.getTracks().forEach((t) => t.stop());
+    stop();
     setFrames(shots);
-    setPhase("review");
+    setPhase("product-photo");
   }
 
   function beginCountdown() {
@@ -84,25 +62,32 @@ export default function SwitchFlow({ sessionId }: { sessionId: string }) {
 
   function retake() {
     setFrames([]);
-    startCamera();
+    start();
+    setPhase("ready");
   }
 
   async function submit() {
     setPhase("submitting");
     setErrorMsg(null);
     try {
+      const images = frames.map((base64, i) => ({
+        base64,
+        mediaType: "image/jpeg" as const,
+        filename: `switch-frame-${i}.jpg`,
+      }));
+      if (productPhoto) {
+        images.push({ base64: productPhoto, mediaType: "image/jpeg", filename: "product-photo.jpg" });
+      }
       const res = await fetch("/api/sessions/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId,
-          images: frames.map((base64, i) => ({
-            base64,
-            mediaType: "image/jpeg",
-            filename: `switch-frame-${i}.jpg`,
-          })),
-          context: "",
-          rawData: { frameCount: frames.length, burstIntervalMs: BURST_INTERVAL_MS },
+          images,
+          context: productPhoto
+            ? "The final image is a general photo of the whole Switch — not part of the calibration burst."
+            : "",
+          rawData: { frameCount: frames.length, burstIntervalMs: BURST_INTERVAL_MS, hasProductPhoto: !!productPhoto },
         }),
       });
       const data = await res.json();
@@ -125,7 +110,10 @@ export default function SwitchFlow({ sessionId }: { sessionId: string }) {
         </ol>
         <p className="text-xs text-foreground/50">TestPass will collect: {config.dataCollected.join("; ")}.</p>
         <button
-          onClick={startCamera}
+          onClick={() => {
+            start();
+            setPhase("ready");
+          }}
           className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90"
         >
           Turn on camera
@@ -134,13 +122,29 @@ export default function SwitchFlow({ sessionId }: { sessionId: string }) {
     );
   }
 
-  if (phase === "camera-error") {
+  if (cameraState === "error") {
     return (
       <div className="space-y-3 text-sm">
         <p>TestPass couldn&apos;t access your camera. Check your browser&apos;s camera permission for this site and try again.</p>
-        <button onClick={startCamera} className="rounded-lg border border-border px-4 py-2 text-sm font-medium">
+        <button onClick={start} className="rounded-lg border border-border px-4 py-2 text-sm font-medium">
           Try again
         </button>
+      </div>
+    );
+  }
+
+  if (phase === "product-photo") {
+    return (
+      <div className="space-y-4">
+        <StepIndicator steps={STEPS} current={2} />
+        <ProductPhotoStage
+          deviceLabel="Nintendo Switch"
+          onCaptured={(b64) => {
+            setProductPhoto(b64);
+            setPhase("review");
+          }}
+          onSkip={() => setPhase("review")}
+        />
       </div>
     );
   }
@@ -155,43 +159,64 @@ export default function SwitchFlow({ sessionId }: { sessionId: string }) {
   }
 
   const stepIndex =
-    phase === "review" ? 2 : phase === "submitting" || phase === "submit-error" ? 3 : 1;
+    phase === "review" ? 3 : phase === "submitting" || phase === "submit-error" ? 4 : 1;
 
   return (
     <div className="space-y-4">
       <StepIndicator steps={STEPS} current={stepIndex} />
-      <div className="relative overflow-hidden rounded-xl border border-border bg-black">
-        <video ref={videoRef} className="aspect-video w-full object-cover" playsInline muted />
-        {phase === "countdown" && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-5xl font-bold text-white">
-            {countdown || "Go!"}
-          </div>
-        )}
-        {phase === "capturing" && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-lg font-medium text-white">
-            Capturing… move both sticks in circles
-          </div>
-        )}
-      </div>
+
+      {(phase === "ready" || phase === "countdown" || phase === "capturing") && (
+        <CameraStage
+          videoRef={videoRef}
+          state={cameraState}
+          videoReady={videoReady}
+          onVideoReady={() => setVideoReady(true)}
+          overlay={
+            <>
+              {phase === "countdown" && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-5xl font-bold text-white">
+                  {countdown || "Go!"}
+                </div>
+              )}
+              {phase === "capturing" && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-center text-lg font-medium text-white">
+                  Capturing… move both sticks in circles
+                </div>
+              )}
+            </>
+          }
+        />
+      )}
       <canvas ref={canvasRef} className="hidden" />
 
       {phase === "ready" && (
         <button
           onClick={beginCountdown}
-          className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90"
+          disabled={!videoReady}
+          className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40"
         >
           Start test
         </button>
       )}
 
       {phase === "review" && (
-        <div className="space-y-3">
-          <div className="grid grid-cols-5 gap-1">
-            {frames.map((f, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img key={i} src={`data:image/jpeg;base64,${f}`} alt={`frame ${i + 1}`} className="aspect-square rounded object-cover" />
-            ))}
+        <div className="space-y-4">
+          <div>
+            <p className="mb-2 text-xs font-medium text-foreground/50">Calibration burst</p>
+            <div className="grid grid-cols-5 gap-1">
+              {frames.map((f, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={i} src={`data:image/jpeg;base64,${f}`} alt={`frame ${i + 1}`} className="aspect-square rounded object-cover" />
+              ))}
+            </div>
           </div>
+          {productPhoto && (
+            <div>
+              <p className="mb-2 text-xs font-medium text-foreground/50">Photo of the device</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`data:image/jpeg;base64,${productPhoto}`} alt="Switch" className="aspect-video w-full rounded-lg object-cover" />
+            </div>
+          )}
           <div className="flex gap-2">
             <button onClick={retake} className="flex-1 rounded-lg border border-border py-2 text-sm font-medium">
               Retake

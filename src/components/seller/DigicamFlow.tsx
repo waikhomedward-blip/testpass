@@ -4,11 +4,12 @@ import { useRef, useState } from "react";
 import { CATEGORY_CONFIG } from "@/lib/primitives";
 import { newChallengeCode } from "@/lib/challenge";
 import StepIndicator from "./StepIndicator";
+import ProductPhotoStage from "./ProductPhotoStage";
 
 const config = CATEGORY_CONFIG.camera;
-const STEPS = ["Your code", "Upload photos", "Review", "Submit"];
+const STEPS = ["Your code", "Upload photos", "Product photo", "Review", "Submit"];
 
-type Phase = "instructions" | "review" | "submitting" | "done" | "submit-error";
+type Phase = "instructions" | "upload" | "product-photo" | "review" | "submitting" | "done" | "submit-error";
 
 interface Shot {
   label: "Wide" | "Zoom";
@@ -33,6 +34,7 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
   const [phase, setPhase] = useState<Phase>("instructions");
   const [wide, setWide] = useState<Shot | null>(null);
   const [zoom, setZoom] = useState<Shot | null>(null);
+  const [productPhoto, setProductPhoto] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [readError, setReadError] = useState<string | null>(null);
 
@@ -53,7 +55,7 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
   }
 
   function goToUpload() {
-    setPhase("review"); // "review" phase doubles as the upload+review step below
+    setPhase("upload");
   }
 
   function retake() {
@@ -61,6 +63,7 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
     setZoom(null);
     if (wideInputRef.current) wideInputRef.current.value = "";
     if (zoomInputRef.current) zoomInputRef.current.value = "";
+    setPhase("upload");
   }
 
   async function submit() {
@@ -68,17 +71,23 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
     setPhase("submitting");
     setErrorMsg(null);
     try {
+      const images: { base64: string; mediaType: "image/jpeg"; filename: string }[] = [
+        { base64: wide.base64, mediaType: "image/jpeg", filename: "digicam-wide.jpg" },
+        { base64: zoom.base64, mediaType: "image/jpeg", filename: "digicam-zoom.jpg" },
+      ];
+      if (productPhoto) {
+        images.push({ base64: productPhoto, mediaType: "image/jpeg", filename: "product-photo.jpg" });
+      }
       const res = await fetch("/api/sessions/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId,
-          images: [
-            { base64: wide.base64, mediaType: "image/jpeg", filename: "digicam-wide.jpg" },
-            { base64: zoom.base64, mediaType: "image/jpeg", filename: "digicam-zoom.jpg" },
-          ],
-          context: `Expected one-time code: ${code}. First image is the WIDE shot, second image is the ZOOM shot.`,
-          rawData: { expectedCode: code },
+          images,
+          context: `Expected one-time code: ${code}. First image is the WIDE shot, second image is the ZOOM shot.${
+            productPhoto ? " The third image is a general photo of the whole camera — not part of the zoom test." : ""
+          }`,
+          rawData: { expectedCode: code, hasProductPhoto: !!productPhoto },
         }),
       });
       const data = await res.json();
@@ -124,11 +133,81 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
     );
   }
 
+  if (phase === "product-photo") {
+    return (
+      <div className="space-y-4">
+        <StepIndicator steps={STEPS} current={2} />
+        <ProductPhotoStage
+          deviceLabel="camera"
+          onCaptured={(b64) => {
+            setProductPhoto(b64);
+            setPhase("review");
+          }}
+          onSkip={() => setPhase("review")}
+        />
+      </div>
+    );
+  }
+
   const bothPicked = !!wide && !!zoom;
 
+  if (phase === "review" || phase === "submitting" || phase === "submit-error") {
+    return (
+      <div className="space-y-4">
+        <StepIndicator steps={STEPS} current={phase === "review" ? 3 : 4} />
+        <div>
+          <p className="mb-2 text-xs font-medium text-foreground/50">Wide &amp; zoom test shots</p>
+          <div className="grid grid-cols-2 gap-2">
+            {wide && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={wide.previewUrl} alt="Wide shot" className="aspect-square w-full rounded-lg object-cover" />
+            )}
+            {zoom && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={zoom.previewUrl} alt="Zoom shot" className="aspect-square w-full rounded-lg object-cover" />
+            )}
+          </div>
+        </div>
+        {productPhoto && (
+          <div>
+            <p className="mb-2 text-xs font-medium text-foreground/50">Photo of the device</p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={`data:image/jpeg;base64,${productPhoto}`} alt="Camera" className="aspect-video w-full rounded-lg object-cover" />
+          </div>
+        )}
+        {phase === "review" && (
+          <div className="flex gap-2">
+            <button onClick={retake} className="flex-1 rounded-lg border border-border py-2 text-sm font-medium">
+              Clear photos
+            </button>
+            <button
+              onClick={submit}
+              disabled={!bothPicked}
+              className="flex-1 rounded-lg bg-accent py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40"
+            >
+              Submit
+            </button>
+          </div>
+        )}
+
+        {phase === "submitting" && <p className="text-center text-sm text-foreground/60">Submitting…</p>}
+
+        {phase === "submit-error" && (
+          <div className="space-y-2 text-sm">
+            <p className="text-red-500">{errorMsg}</p>
+            <button onClick={submit} className="rounded-lg border border-border px-4 py-2 text-sm font-medium">
+              Retry submit
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // "upload"
   return (
     <div className="space-y-4">
-      <StepIndicator steps={STEPS} current={phase === "submitting" || phase === "submit-error" ? 3 : bothPicked ? 2 : 1} />
+      <StepIndicator steps={STEPS} current={1} />
 
       <div className="rounded-lg border border-dashed border-border px-3 py-2 text-center text-xs text-foreground/50">
         Code for this session: <span className="font-mono font-semibold text-foreground/70">{code}</span>
@@ -153,31 +232,13 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
 
       {readError && <p className="text-sm text-red-500">{readError}</p>}
 
-      {phase === "review" && (
-        <div className="flex gap-2">
-          <button onClick={retake} className="flex-1 rounded-lg border border-border py-2 text-sm font-medium">
-            Clear photos
-          </button>
-          <button
-            onClick={submit}
-            disabled={!bothPicked}
-            className="flex-1 rounded-lg bg-accent py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40"
-          >
-            Submit
-          </button>
-        </div>
-      )}
-
-      {phase === "submitting" && <p className="text-center text-sm text-foreground/60">Submitting…</p>}
-
-      {phase === "submit-error" && (
-        <div className="space-y-2 text-sm">
-          <p className="text-red-500">{errorMsg}</p>
-          <button onClick={submit} className="rounded-lg border border-border px-4 py-2 text-sm font-medium">
-            Retry submit
-          </button>
-        </div>
-      )}
+      <button
+        onClick={() => setPhase("product-photo")}
+        disabled={!bothPicked}
+        className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40"
+      >
+        Continue
+      </button>
     </div>
   );
 }

@@ -12,6 +12,7 @@ export interface EvaluationResult {
   verdict: EvidenceVerdict;
   reasoning: string;
   associationStrength: AssociationStrength;
+  cosmeticNote: string | null;
 }
 
 let client: Anthropic | null = null;
@@ -74,7 +75,11 @@ function parseVerdict(raw: string): EvaluationResult {
       typeof parsed.reasoning === "string" && parsed.reasoning.trim()
         ? parsed.reasoning.trim()
         : "The evaluator did not return a usable explanation.";
-    return { verdict, reasoning, associationStrength };
+    const cosmeticNote =
+      typeof parsed.cosmetic_note === "string" && parsed.cosmetic_note.trim()
+        ? parsed.cosmetic_note.trim()
+        : null;
+    return { verdict, reasoning, associationStrength, cosmeticNote };
   } catch {
     // Fail closed: a malformed model response is evidence quality we can't
     // vouch for, not proof the device passed.
@@ -83,6 +88,7 @@ function parseVerdict(raw: string): EvaluationResult {
       reasoning:
         "TestPass couldn't reliably score this submission automatically. Treat this as ungraded and consider asking the seller for a retest.",
       associationStrength: "INCONCLUSIVE",
+      cosmeticNote: null,
     };
   }
 }

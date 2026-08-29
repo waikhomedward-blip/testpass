@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { CATEGORY_CONFIG } from "@/lib/primitives";
 import StepIndicator from "./StepIndicator";
+import { useCamera } from "./useCamera";
+import CameraStage from "./CameraStage";
+import ProductPhotoStage from "./ProductPhotoStage";
 
 const config = CATEGORY_CONFIG.gopro;
-const STEPS = ["Bluetooth", "Photo", "Review", "Submit"];
+const STEPS = ["Bluetooth", "Photo", "Product photo", "Review", "Submit"];
 
 // Minimal Web Bluetooth typings for the subset this component uses — the
 // full API isn't in lib.dom.d.ts by default, and this keeps us honest
@@ -31,8 +34,8 @@ type Phase =
   | "instructions"
   | "bluetooth-connecting"
   | "camera-instructions"
-  | "camera-error"
   | "camera-ready"
+  | "product-photo"
   | "review"
   | "submitting"
   | "done"
@@ -62,15 +65,10 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
   const [phase, setPhase] = useState<Phase>("instructions");
   const [bt, setBt] = useState<BluetoothResult>(EMPTY_BT);
   const [frame, setFrame] = useState<string | null>(null);
+  const [productPhoto, setProductPhoto] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-
-  useEffect(() => {
-    return () => streamRef.current?.getTracks().forEach((t) => t.stop());
-  }, []);
+  const { videoRef, canvasRef, state: cameraState, videoReady, setVideoReady, start, stop, capture } = useCamera();
 
   async function connectBluetooth() {
     setPhase("bluetooth-connecting");
@@ -136,41 +134,18 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
     setPhase("camera-instructions");
   }
 
-  async function startCamera() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1280 } },
-        audio: false,
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
-      setPhase("camera-ready");
-    } catch {
-      setPhase("camera-error");
-    }
-  }
-
   function captureFrame() {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas) return;
-    canvas.width = video.videoWidth || 1280;
-    canvas.height = video.videoHeight || 720;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
-    setFrame(dataUrl.split(",")[1]);
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    setPhase("review");
+    const shot = capture(0.85);
+    if (!shot) return;
+    setFrame(shot);
+    stop();
+    setPhase("product-photo");
   }
 
   function retake() {
     setFrame(null);
-    startCamera();
+    start();
+    setPhase("camera-ready");
   }
 
   async function submit() {
@@ -183,19 +158,24 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
       bt.manufacturer ? `Manufacturer: ${bt.manufacturer}` : null,
       bt.model ? `Model: ${bt.model}` : null,
       bt.batteryLevel !== null ? `Reported battery level: ${bt.batteryLevel}%` : null,
+      productPhoto ? "The final image is a general photo of the whole GoPro — not part of the status check." : null,
     ]
       .filter(Boolean)
       .join("\n");
 
     try {
+      const images = [{ base64: frame, mediaType: "image/jpeg" as const, filename: "gopro-status.jpg" }];
+      if (productPhoto) {
+        images.push({ base64: productPhoto, mediaType: "image/jpeg", filename: "product-photo.jpg" });
+      }
       const res = await fetch("/api/sessions/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId,
-          images: [{ base64: frame, mediaType: "image/jpeg", filename: "gopro-status.jpg" }],
+          images,
           context,
-          rawData: { bluetooth: bt },
+          rawData: { bluetooth: bt, hasProductPhoto: !!productPhoto },
         }),
       });
       const data = await res.json();
@@ -246,7 +226,10 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
           screen showing its battery and storage status.
         </p>
         <button
-          onClick={startCamera}
+          onClick={() => {
+            start();
+            setPhase("camera-ready");
+          }}
           className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90"
         >
           Turn on camera
@@ -255,13 +238,29 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
     );
   }
 
-  if (phase === "camera-error") {
+  if (cameraState === "error") {
     return (
       <div className="space-y-3 text-sm">
         <p>TestPass couldn&apos;t access your camera. Check your browser&apos;s camera permission for this site and try again.</p>
-        <button onClick={startCamera} className="rounded-lg border border-border px-4 py-2 text-sm font-medium">
+        <button onClick={start} className="rounded-lg border border-border px-4 py-2 text-sm font-medium">
           Try again
         </button>
+      </div>
+    );
+  }
+
+  if (phase === "product-photo") {
+    return (
+      <div className="space-y-4">
+        <StepIndicator steps={STEPS} current={2} />
+        <ProductPhotoStage
+          deviceLabel="GoPro"
+          onCaptured={(b64) => {
+            setProductPhoto(b64);
+            setPhase("review");
+          }}
+          onSkip={() => setPhase("review")}
+        />
       </div>
     );
   }
@@ -276,40 +275,59 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
   }
 
   const stepIndex =
-    phase === "review" ? 2 : phase === "submitting" || phase === "submit-error" ? 3 : 1;
+    phase === "review" ? 3 : phase === "submitting" || phase === "submit-error" ? 4 : 1;
 
   return (
     <div className="space-y-4">
       <StepIndicator steps={STEPS} current={stepIndex} />
-      <div className="relative overflow-hidden rounded-xl border border-border bg-black">
-        <video ref={videoRef} className={`aspect-video w-full object-cover ${frame ? "hidden" : ""}`} playsInline muted />
-        {frame && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={`data:image/jpeg;base64,${frame}`} alt="captured status screen" className="aspect-video w-full object-cover" />
-        )}
-      </div>
+
+      {phase === "camera-ready" && (
+        <CameraStage
+          videoRef={videoRef}
+          state={cameraState}
+          videoReady={videoReady}
+          onVideoReady={() => setVideoReady(true)}
+        />
+      )}
       <canvas ref={canvasRef} className="hidden" />
 
       {phase === "camera-ready" && (
         <button
           onClick={captureFrame}
-          className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90"
+          disabled={!videoReady}
+          className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40"
         >
           Capture photo
         </button>
       )}
 
       {phase === "review" && (
-        <div className="flex gap-2">
-          <button onClick={retake} className="flex-1 rounded-lg border border-border py-2 text-sm font-medium">
-            Retake
-          </button>
-          <button
-            onClick={submit}
-            className="flex-1 rounded-lg bg-accent py-2 text-sm font-medium text-white hover:opacity-90"
-          >
-            Submit
-          </button>
+        <div className="space-y-4">
+          {frame && (
+            <div>
+              <p className="mb-2 text-xs font-medium text-foreground/50">Status screen</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`data:image/jpeg;base64,${frame}`} alt="captured status screen" className="aspect-video w-full rounded-lg object-cover" />
+            </div>
+          )}
+          {productPhoto && (
+            <div>
+              <p className="mb-2 text-xs font-medium text-foreground/50">Photo of the device</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`data:image/jpeg;base64,${productPhoto}`} alt="GoPro" className="aspect-video w-full rounded-lg object-cover" />
+            </div>
+          )}
+          <div className="flex gap-2">
+            <button onClick={retake} className="flex-1 rounded-lg border border-border py-2 text-sm font-medium">
+              Retake
+            </button>
+            <button
+              onClick={submit}
+              className="flex-1 rounded-lg bg-accent py-2 text-sm font-medium text-white hover:opacity-90"
+            >
+              Submit
+            </button>
+          </div>
         </div>
       )}
 

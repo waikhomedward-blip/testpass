@@ -14,6 +14,17 @@
 
 import { Category, CapabilityLabel } from "./types";
 
+// Appended to every category's evaluationPromptSystem. Every submission may
+// include one extra image at the end — a general photo of the physical
+// device, not part of the functional test — so the buyer can actually see
+// the item and its cosmetic condition. This is intentionally weak evidence
+// (a photo alone barely proves anything), so it must never move the verdict
+// or association_strength; it only ever adds an optional, purely
+// descriptive note.
+const PRODUCT_PHOTO_ADDENDUM = `
+
+You may also be given one additional image after the diagnostic ones, of the whole physical device — the context text will say so if present. This photo is NOT diagnostic evidence and must never change your verdict or association_strength; it exists only so the buyer can see the real item. If it's present and something is clearly visible worth mentioning (visible damage, missing parts, or nothing notable and it looks consistent with a normal used unit), add a one-sentence "cosmetic_note" field to your JSON with a plain, neutral observation. If no such photo was given, or nothing can be confidently judged from it, omit "cosmetic_note" or leave it an empty string — never guess condition you can't see clearly.`;
+
 export interface CategoryConfig {
   category: Category;
   label: string;
@@ -41,7 +52,7 @@ export const CATEGORY_CONFIG: Record<Category, CategoryConfig> = {
     functionTested: "Analog stick calibration (both sticks, full range of motion)",
     primitiveLevel: "Level 5 — Guided capture (built-in calibration screen)",
     capabilityLabel: "MODEL-DEPENDENT",
-    estimatedSeconds: 90,
+    estimatedSeconds: 120,
     sellerInstructions: [
       "On the Switch, go to System Settings → Controllers and Sensors → Test Input Devices, and open the calibration screen for each controller you're including.",
       "Point your phone camera at the TV or screen so the calibration screen is clearly visible.",
@@ -51,14 +62,15 @@ export const CATEGORY_CONFIG: Record<Category, CategoryConfig> = {
     dataCollected: [
       "A short burst of photos of the on-screen calibration display",
       "Timestamps for when the burst was captured",
+      "One general photo of the Switch itself",
     ],
     evaluationPromptSystem: `You are the TestPass evidence evaluator for a Nintendo Switch controller-drift test.
 You will be shown a short burst of photos taken in sequence of a Nintendo Switch (or Joy-Con/Pro Controller) analog-stick calibration screen, while the seller was asked to move both sticks through their full range of motion.
 Decide whether the photos are consistent with:
 - both stick indicators moving substantially and smoothly across frames (evidence the sticks respond to input across their range), or
 - a stick indicator that stays off-center at rest (possible drift), barely moves across frames (possible dead zone / stuck stick), or is inconsistent/unreadable.
-Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE"}.
-Use INCONCLUSIVE whenever the calibration screen is not clearly visible, the photos are blurry, too dark, or you cannot confidently read stick position in at least 3 of the frames. Use FAILED only when the photos clearly show a stick that fails to center at rest or fails to move despite the seller's motion. Never guess — under-claim rather than over-claim.`,
+Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
+Use INCONCLUSIVE whenever the calibration screen is not clearly visible, the photos are blurry, too dark, or you cannot confidently read stick position in at least 3 of the frames. Use FAILED only when the photos clearly show a stick that fails to center at rest or fails to move despite the seller's motion. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
   },
   gopro: {
     category: "gopro",
@@ -70,7 +82,7 @@ Use INCONCLUSIVE whenever the calibration screen is not clearly visible, the pho
     functionTested: "Device identity, battery level, and a fresh recording",
     primitiveLevel: "Level 1 — Direct machine diagnostics (Bluetooth LE) + Level 3 — device-generated challenge artifact",
     capabilityLabel: "EXPERIMENTAL",
-    estimatedSeconds: 90,
+    estimatedSeconds: 120,
     sellerInstructions: [
       "Turn the GoPro on and keep it within a foot of your phone or laptop.",
       "Tap Connect via Bluetooth below and pick your GoPro from the list your browser shows.",
@@ -80,12 +92,13 @@ Use INCONCLUSIVE whenever the calibration screen is not clearly visible, the pho
     dataCollected: [
       "Device name and any Bluetooth-reported battery level (if the connection succeeds)",
       "One guided confirmation photo of the camera's on-screen status",
+      "One general photo of the GoPro itself",
     ],
     evaluationPromptSystem: `You are the TestPass evidence evaluator for a GoPro action camera pre-purchase test.
 You will be given: (a) the result of a Web Bluetooth connection attempt (may have succeeded with a device name/battery reading, or may have failed/been skipped), and (b) a guided confirmation photo of the camera's screen.
 Decide whether the combined evidence is consistent with a functioning camera that powers on, reports a real battery/status reading, and matches between the Bluetooth reading (if any) and the photographed screen (if legible).
-Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE"}.
-If Bluetooth failed/was skipped and the photo is the only evidence, that is at best MODERATE or WEAK association — say so. Use INCONCLUSIVE if the photo is unreadable or nothing meaningful was captured. Use FAILED only if the evidence affirmatively shows a problem (e.g. an error screen, a dead battery indicator with no power). Never guess — under-claim rather than over-claim.`,
+Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
+If Bluetooth failed/was skipped and the photo is the only evidence, that is at best MODERATE or WEAK association — say so. Use INCONCLUSIVE if the photo is unreadable or nothing meaningful was captured. Use FAILED only if the evidence affirmatively shows a problem (e.g. an error screen, a dead battery indicator with no power). Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
   },
   dji: {
     category: "dji",
@@ -101,7 +114,7 @@ If Bluetooth failed/was skipped and the photo is the only evidence, that is at b
     // honest about that (Level 5, not Level 1/2) matters more than sounding more advanced.
     primitiveLevel: "Level 5 — Guided capture (DJI app status & battery screens)",
     capabilityLabel: "EXPERIMENTAL",
-    estimatedSeconds: 90,
+    estimatedSeconds: 120,
     sellerInstructions: [
       "Power on the aircraft and open the DJI Fly (or DJI GO 4) app you normally use with it.",
       "In the app, go to the aircraft's status screen — the one showing serial number, activation/binding status, and any active warnings.",
@@ -111,12 +124,13 @@ If Bluetooth failed/was skipped and the photo is the only evidence, that is at b
     dataCollected: [
       "Photos or screenshots of the DJI app's aircraft status and battery screens",
       "Whatever serial, binding-status, cycle-count, and warning information is legible in them",
+      "One general photo of the drone itself",
     ],
     evaluationPromptSystem: `You are the TestPass evidence evaluator for a DJI drone pre-purchase test.
 You will be shown one or more photos/screenshots of the DJI Fly or DJI GO 4 app's own aircraft-status and battery screens, captured live by the seller. This is guided capture of the app's UI, not a direct telemetry pull — treat it as weaker evidence than a direct machine reading, and say so in your reasoning when relevant.
 Decide whether the images are consistent with a drone that powers on, connects to its app, and shows no unresolved activation-lock or critical warning — versus one that clearly shows an account-binding lock, a critical warning/error state, or a battery in poor health (very high cycle count, health warning).
-Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE"}.
-Association strength should rarely exceed MODERATE for this primitive — a photographed app screen is not cryptographically tied to one physical aircraft. Use INCONCLUSIVE whenever the screens are unreadable, cropped, or don't show the relevant status/battery fields. Use FAILED only when the images affirmatively show a lock, error, or critical warning. Never guess — under-claim rather than over-claim.`,
+Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
+Association strength should rarely exceed MODERATE for this primitive — a photographed app screen is not cryptographically tied to one physical aircraft. Use INCONCLUSIVE whenever the screens are unreadable, cropped, or don't show the relevant status/battery fields. Use FAILED only when the images affirmatively show a lock, error, or critical warning. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
   },
   camera: {
     category: "camera",
@@ -129,7 +143,7 @@ Association strength should rarely exceed MODERATE for this primitive — a phot
     functionTested: "Optical zoom, via a fresh one-time challenge target photographed wide and zoomed",
     primitiveLevel: "Level 3 — Device-generated challenge artifact (wide vs. zoom test shot)",
     capabilityLabel: "EXPERIMENTAL",
-    estimatedSeconds: 120,
+    estimatedSeconds: 150,
     sellerInstructions: [
       "TestPass will show you a one-time code below. Keep it visible on this screen, or write it on paper next to another screen.",
       "Using the camera you're selling, take one photo of the code from a few feet away, zoomed all the way OUT (widest setting).",
@@ -139,6 +153,7 @@ Association strength should rarely exceed MODERATE for this primitive — a phot
     dataCollected: [
       "Two photos taken by the camera being tested — one at the widest zoom, one at full zoom",
       "The one-time code TestPass generated for this session, used only to confirm the photos are fresh",
+      "One general photo of the camera itself",
     ],
     evaluationPromptSystem: `You are the TestPass evidence evaluator for a digital camera (digicam) pre-purchase zoom test.
 You will be given exactly two images in this order: first a WIDE shot, second a ZOOM shot, both supposedly taken moments apart of the same one-time code by the same stationary camera at different zoom settings. The expected code and any other context will follow as text after the images.
@@ -146,8 +161,8 @@ Decide whether the evidence is consistent with the camera's optical zoom genuine
 1. The code is legible and matches the expected code in both images (evidence the photos are fresh, not reused/stock).
 2. The ZOOM image shows meaningfully tighter, more magnified framing of the same scene than the WIDE image — the subject should appear noticeably larger/closer, not just an identical or barely-different crop.
 3. Both images are reasonably sharp and in focus, not so blurry that a lens or autofocus problem would be masked.
-Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE"}.
-Use INCONCLUSIVE if the code doesn't match or isn't legible in both images, if you can't judge the framing change confidently, or if only one usable image was provided. Use FAILED only if the code matches (so you know it's a fresh, genuine pair) but the zoom image shows essentially no magnification change, or is severely out of focus in a way that suggests a broken mechanism. Never guess — under-claim rather than over-claim.`,
+Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
+Use INCONCLUSIVE if the code doesn't match or isn't legible in both images, if you can't judge the framing change confidently, or if only one usable image was provided. Use FAILED only if the code matches (so you know it's a fresh, genuine pair) but the zoom image shows essentially no magnification change, or is severely out of focus in a way that suggests a broken mechanism. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
   },
 };
 

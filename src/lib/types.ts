@@ -37,6 +37,19 @@ export interface TestSession {
   unlocked: boolean;
 }
 
+export interface StoredImage {
+  path: string;
+  filename: string;
+}
+
+// Attached server-side (see getSignedCaptureUrls) when a session is fetched
+// for display — not stored in the DB itself, which only holds `path`.
+export interface DisplayImage {
+  url: string;
+  filename: string;
+  label: string;
+}
+
 export interface EvidenceRecord {
   id: string;
   session_id: string;
@@ -47,7 +60,10 @@ export interface EvidenceRecord {
   reasoning: string;
   association_strength: AssociationStrength | null;
   raw_data: Record<string, unknown> | null;
+  image_paths: StoredImage[] | null;
+  cosmetic_note: string | null;
   created_at: string;
+  images?: DisplayImage[];
 }
 
 export interface SessionWithEvidence extends TestSession {

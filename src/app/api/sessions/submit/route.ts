@@ -51,9 +51,13 @@ export async function POST(req: NextRequest) {
       context: body.context ?? "",
     });
 
-    // Best-effort raw-artifact retention; failures here don't block the result.
+    // Best-effort raw-artifact retention; failures here don't block the
+    // result. Paths that do succeed are kept so the buyer's results page
+    // can show what was actually captured.
+    const imagePaths: { path: string; filename: string }[] = [];
     for (const img of body.images) {
-      await uploadCapture(session.id, img.filename, img.base64, img.mediaType);
+      const path = await uploadCapture(session.id, img.filename, img.base64, img.mediaType);
+      if (path) imagePaths.push({ path, filename: img.filename });
     }
 
     await recordEvidenceAndComplete({
@@ -65,6 +69,8 @@ export async function POST(req: NextRequest) {
       reasoning: evaluation.reasoning,
       associationStrength: evaluation.associationStrength,
       rawData: body.rawData ?? null,
+      imagePaths,
+      cosmeticNote: evaluation.cosmeticNote,
     });
 
     return NextResponse.json({ ok: true });

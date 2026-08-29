@@ -7,7 +7,11 @@ import {
   AssociationStrength,
   CapabilityLabel,
   SessionWithEvidence,
+  StoredImage,
+  DisplayImage,
 } from "./types";
+
+const SIGNED_URL_TTL_SECONDS = 60 * 60; // 1 hour — plenty for one page view
 
 const SESSION_TTL_DAYS = 7;
 
@@ -71,6 +75,8 @@ export async function recordEvidenceAndComplete(input: {
   reasoning: string;
   associationStrength: AssociationStrength | null;
   rawData: Record<string, unknown> | null;
+  imagePaths: StoredImage[];
+  cosmeticNote: string | null;
   sessionStatus?: SessionStatus;
 }): Promise<void> {
   const db = getSupabaseAdmin();
@@ -83,6 +89,8 @@ export async function recordEvidenceAndComplete(input: {
     reasoning: input.reasoning,
     association_strength: input.associationStrength,
     raw_data: input.rawData,
+    image_paths: input.imagePaths,
+    cosmetic_note: input.cosmeticNote,
   });
   if (error) throw error;
 
@@ -93,6 +101,43 @@ export async function recordEvidenceAndComplete(input: {
       submitted_at: new Date().toISOString(),
     })
     .eq("id", input.sessionId);
+}
+
+// Turns each evidence row's stored capture paths into short-lived signed
+// URLs the buyer's browser can actually load — the `captures` bucket is
+// private (see schema.sql), so a raw storage path isn't fetchable on its
+// own. Best-effort: a signing failure for one row just means that row shows
+// no images, it doesn't break the rest of the page.
+export async function attachSignedImageUrls(session: SessionWithEvidence): Promise<SessionWithEvidence> {
+  const db = getSupabaseAdmin();
+  const evidence = await Promise.all(
+    session.evidence.map(async (ev) => {
+      const paths = ev.image_paths ?? [];
+      if (paths.length === 0) return ev;
+      const { data, error } = await db.storage
+        .from("captures")
+        .createSignedUrls(
+          paths.map((p) => p.path),
+          SIGNED_URL_TTL_SECONDS
+        );
+      if (error || !data) {
+        console.error("createSignedUrls failed:", error?.message);
+        return ev;
+      }
+      const images: DisplayImage[] = data
+        .map((d, i) => ({
+          url: d.signedUrl,
+          filename: paths[i].filename,
+          label: paths[i].filename.includes("product-photo") ? "Photo of the device" : "Diagnostic capture",
+        }))
+        // A per-item signing failure (rare, but the API allows it inside an
+        // otherwise-successful batch) leaves signedUrl null — drop just
+        // that image rather than failing the whole row.
+        .filter((img): img is DisplayImage => typeof img.url === "string" && img.url.length > 0);
+      return { ...ev, images };
+    })
+  );
+  return { ...session, evidence };
 }
 
 export async function uploadCapture(

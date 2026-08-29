@@ -1,17 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { CATEGORY_CONFIG } from "@/lib/primitives";
 import StepIndicator from "./StepIndicator";
+import { useCamera } from "./useCamera";
+import CameraStage from "./CameraStage";
+import ProductPhotoStage from "./ProductPhotoStage";
 
 const config = CATEGORY_CONFIG.dji;
-const STEPS = ["Instructions", "Capture screens", "Review", "Submit"];
+const STEPS = ["Instructions", "Capture screens", "Product photo", "Review", "Submit"];
 
 type Phase =
   | "instructions"
-  | "camera-error"
   | "capture-status"
   | "capture-battery"
+  | "product-photo"
   | "review"
   | "submitting"
   | "done"
@@ -25,70 +28,48 @@ interface Shot {
 export default function DJIFlow({ sessionId }: { sessionId: string }) {
   const [phase, setPhase] = useState<Phase>("instructions");
   const [shots, setShots] = useState<Shot[]>([]);
+  const [productPhoto, setProductPhoto] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-
-  useEffect(() => {
-    return () => streamRef.current?.getTracks().forEach((t) => t.stop());
-  }, []);
-
-  async function startCamera() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment", width: { ideal: 1280 } },
-        audio: false,
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
-      setPhase("capture-status");
-    } catch {
-      setPhase("camera-error");
-    }
-  }
+  const { videoRef, canvasRef, state: cameraState, videoReady, setVideoReady, start, stop, capture } = useCamera();
 
   function captureCurrent(label: string, next: Phase) {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!video || !canvas) return;
-    canvas.width = video.videoWidth || 1280;
-    canvas.height = video.videoHeight || 720;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
-    setShots((prev) => [...prev, { label, base64: dataUrl.split(",")[1] }]);
-    if (next === "review") streamRef.current?.getTracks().forEach((t) => t.stop());
+    const shot = capture(0.85);
+    if (!shot) return;
+    setShots((prev) => [...prev, { label, base64: shot }]);
+    if (next !== "capture-battery") stop();
     setPhase(next);
   }
 
   function retake() {
     setShots([]);
-    startCamera();
+    start();
+    setPhase("capture-status");
   }
 
   async function submit() {
     setPhase("submitting");
     setErrorMsg(null);
-    const context = `Screens captured, in order: ${shots.map((s) => s.label).join(", ")}.`;
+    const context = `Screens captured, in order: ${shots.map((s) => s.label).join(", ")}.${
+      productPhoto ? " The final image is a general photo of the whole drone — not one of the app screens." : ""
+    }`;
     try {
+      const images = shots.map((s, i) => ({
+        base64: s.base64,
+        mediaType: "image/jpeg" as const,
+        filename: `dji-${i}-${s.label.toLowerCase().replace(/\s+/g, "-")}.jpg`,
+      }));
+      if (productPhoto) {
+        images.push({ base64: productPhoto, mediaType: "image/jpeg", filename: "product-photo.jpg" });
+      }
       const res = await fetch("/api/sessions/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId,
-          images: shots.map((s, i) => ({
-            base64: s.base64,
-            mediaType: "image/jpeg",
-            filename: `dji-${i}-${s.label.toLowerCase().replace(/\s+/g, "-")}.jpg`,
-          })),
+          images,
           context,
-          rawData: { shotLabels: shots.map((s) => s.label) },
+          rawData: { shotLabels: shots.map((s) => s.label), hasProductPhoto: !!productPhoto },
         }),
       });
       const data = await res.json();
@@ -111,7 +92,10 @@ export default function DJIFlow({ sessionId }: { sessionId: string }) {
         </ol>
         <p className="text-xs text-foreground/50">TestPass will collect: {config.dataCollected.join("; ")}.</p>
         <button
-          onClick={startCamera}
+          onClick={() => {
+            start();
+            setPhase("capture-status");
+          }}
           className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90"
         >
           Turn on camera
@@ -120,13 +104,29 @@ export default function DJIFlow({ sessionId }: { sessionId: string }) {
     );
   }
 
-  if (phase === "camera-error") {
+  if (cameraState === "error") {
     return (
       <div className="space-y-3 text-sm">
         <p>TestPass couldn&apos;t access your camera. Check your browser&apos;s camera permission for this site and try again.</p>
-        <button onClick={startCamera} className="rounded-lg border border-border px-4 py-2 text-sm font-medium">
+        <button onClick={start} className="rounded-lg border border-border px-4 py-2 text-sm font-medium">
           Try again
         </button>
+      </div>
+    );
+  }
+
+  if (phase === "product-photo") {
+    return (
+      <div className="space-y-4">
+        <StepIndicator steps={STEPS} current={2} />
+        <ProductPhotoStage
+          deviceLabel="drone"
+          onCaptured={(b64) => {
+            setProductPhoto(b64);
+            setPhase("review");
+          }}
+          onSkip={() => setPhase("review")}
+        />
       </div>
     );
   }
@@ -140,17 +140,21 @@ export default function DJIFlow({ sessionId }: { sessionId: string }) {
     );
   }
 
-  const stepIndex = phase === "submitting" || phase === "submit-error" ? 3 : phase === "review" ? 2 : 1;
+  const stepIndex =
+    phase === "review" ? 3 : phase === "submitting" || phase === "submit-error" ? 4 : 1;
 
   return (
     <div className="space-y-4">
       <StepIndicator steps={STEPS} current={stepIndex} />
 
-      {phase !== "review" && (
+      {(phase === "capture-status" || phase === "capture-battery") && (
         <>
-          <div className="relative overflow-hidden rounded-xl border border-border bg-black">
-            <video ref={videoRef} className="aspect-video w-full object-cover" playsInline muted />
-          </div>
+          <CameraStage
+            videoRef={videoRef}
+            state={cameraState}
+            videoReady={videoReady}
+            onVideoReady={() => setVideoReady(true)}
+          />
           <canvas ref={canvasRef} className="hidden" />
           <p className="text-sm text-foreground/70">
             {phase === "capture-status"
@@ -161,9 +165,10 @@ export default function DJIFlow({ sessionId }: { sessionId: string }) {
             onClick={() =>
               phase === "capture-status"
                 ? captureCurrent("Status screen", "capture-battery")
-                : captureCurrent("Battery screen", "review")
+                : captureCurrent("Battery screen", "product-photo")
             }
-            className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90"
+            disabled={!videoReady}
+            className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40"
           >
             {phase === "capture-status" ? "Capture status screen" : "Capture battery screen"}
           </button>
@@ -171,20 +176,30 @@ export default function DJIFlow({ sessionId }: { sessionId: string }) {
       )}
 
       {phase === "review" && (
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-2">
-            {shots.map((s, i) => (
-              <div key={i}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={`data:image/jpeg;base64,${s.base64}`}
-                  alt={s.label}
-                  className="aspect-video w-full rounded-lg object-cover"
-                />
-                <p className="mt-1 text-center text-xs text-foreground/50">{s.label}</p>
-              </div>
-            ))}
+        <div className="space-y-4">
+          <div>
+            <p className="mb-2 text-xs font-medium text-foreground/50">App screens</p>
+            <div className="grid grid-cols-2 gap-2">
+              {shots.map((s, i) => (
+                <div key={i}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`data:image/jpeg;base64,${s.base64}`}
+                    alt={s.label}
+                    className="aspect-video w-full rounded-lg object-cover"
+                  />
+                  <p className="mt-1 text-center text-xs text-foreground/50">{s.label}</p>
+                </div>
+              ))}
+            </div>
           </div>
+          {productPhoto && (
+            <div>
+              <p className="mb-2 text-xs font-medium text-foreground/50">Photo of the device</p>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`data:image/jpeg;base64,${productPhoto}`} alt="Drone" className="aspect-video w-full rounded-lg object-cover" />
+            </div>
+          )}
           <div className="flex gap-2">
             <button onClick={retake} className="flex-1 rounded-lg border border-border py-2 text-sm font-medium">
               Retake both
