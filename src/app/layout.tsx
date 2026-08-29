@@ -20,16 +20,16 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               </span>
               TestPass
             </Link>
-            <nav className="flex items-center gap-3">
+            <nav className="flex items-center gap-2">
               <Link
                 href="/buyer/mine"
-                className="text-sm font-medium text-foreground/70 transition-colors hover:text-accent"
+                className="rounded-lg border border-border px-3.5 py-1.5 text-sm font-medium text-foreground/70 transition-colors hover:border-accent hover:text-accent"
               >
                 My tests
               </Link>
               <Link
                 href="/"
-                className="rounded-lg border border-border px-3.5 py-1.5 text-sm font-medium text-foreground/70 transition-colors hover:border-accent hover:text-accent"
+                className="rounded-lg bg-accent px-3.5 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
               >
                 Test a device
               </Link>
