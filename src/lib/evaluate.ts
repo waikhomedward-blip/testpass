@@ -50,7 +50,7 @@ export async function evaluateEvidence(input: EvaluationInput): Promise<Evaluati
   });
 
   const message = await getClient().messages.create({
-    model: "claude-sonnet-4-5",
+    model: "claude-sonnet-5",
     max_tokens: 500,
     system: config.evaluationPromptSystem,
     messages: [{ role: "user", content }],
