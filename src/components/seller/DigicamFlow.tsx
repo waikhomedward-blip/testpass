@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { CATEGORY_CONFIG } from "@/lib/primitives";
 import { newChallengeCode } from "@/lib/challenge";
 import StepIndicator from "./StepIndicator";
+import SubmittedScreen from "./SubmittedScreen";
 import ProductPhotoStage from "./ProductPhotoStage";
 
 const config = CATEGORY_CONFIG.camera;
@@ -36,6 +37,7 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
   const [zoom, setZoom] = useState<Shot | null>(null);
   const [productPhoto, setProductPhoto] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [verdict, setVerdict] = useState<string | null>(null);
   const [readError, setReadError] = useState<string | null>(null);
 
   const wideInputRef = useRef<HTMLInputElement>(null);
@@ -92,6 +94,7 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Submission failed.");
+      setVerdict(data.verdict ?? null);
       setPhase("done");
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Submission failed.");
@@ -125,12 +128,7 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
   }
 
   if (phase === "done") {
-    return (
-      <div className="rounded-xl border border-border bg-card p-6 text-center">
-        <p className="text-lg font-semibold">Submitted — thanks!</p>
-        <p className="mt-2 text-sm text-foreground/60">The buyer has your test result now. You&apos;re done.</p>
-      </div>
-    );
+    return <SubmittedScreen verdict={verdict} />;
   }
 
   if (phase === "product-photo") {
