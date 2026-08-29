@@ -20,8 +20,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               </span>
               TestPass
             </Link>
-            <nav className="text-sm text-foreground/60">
-              <Link href="/" className="hover:text-foreground">
+            <nav>
+              <Link
+                href="/"
+                className="rounded-lg border border-border px-3.5 py-1.5 text-sm font-medium text-foreground/70 transition-colors hover:border-accent hover:text-accent"
+              >
                 Test a device
               </Link>
             </nav>
