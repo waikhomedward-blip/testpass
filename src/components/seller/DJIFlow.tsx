@@ -4,17 +4,27 @@ import { useEffect, useRef, useState } from "react";
 import { CATEGORY_CONFIG } from "@/lib/primitives";
 import StepIndicator from "./StepIndicator";
 
-const config = CATEGORY_CONFIG.switch;
-const BURST_COUNT = 5;
-const BURST_INTERVAL_MS = 500;
-const STEPS = ["Instructions", "Record", "Review", "Submit"];
+const config = CATEGORY_CONFIG.dji;
+const STEPS = ["Instructions", "Capture screens", "Review", "Submit"];
 
-type Phase = "instructions" | "camera-error" | "ready" | "countdown" | "capturing" | "review" | "submitting" | "done" | "submit-error";
+type Phase =
+  | "instructions"
+  | "camera-error"
+  | "capture-status"
+  | "capture-battery"
+  | "review"
+  | "submitting"
+  | "done"
+  | "submit-error";
 
-export default function SwitchFlow({ sessionId }: { sessionId: string }) {
+interface Shot {
+  label: string;
+  base64: string;
+}
+
+export default function DJIFlow({ sessionId }: { sessionId: string }) {
   const [phase, setPhase] = useState<Phase>("instructions");
-  const [countdown, setCountdown] = useState(3);
-  const [frames, setFrames] = useState<string[]>([]); // base64 (no data: prefix)
+  const [shots, setShots] = useState<Shot[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -22,9 +32,7 @@ export default function SwitchFlow({ sessionId }: { sessionId: string }) {
   const streamRef = useRef<MediaStream | null>(null);
 
   useEffect(() => {
-    return () => {
-      streamRef.current?.getTracks().forEach((t) => t.stop());
-    };
+    return () => streamRef.current?.getTracks().forEach((t) => t.stop());
   }, []);
 
   async function startCamera() {
@@ -38,71 +46,49 @@ export default function SwitchFlow({ sessionId }: { sessionId: string }) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
-      setPhase("ready");
+      setPhase("capture-status");
     } catch {
       setPhase("camera-error");
     }
   }
 
-  async function captureBurst() {
-    setPhase("capturing");
-    const shots: string[] = [];
+  function captureCurrent(label: string, next: Phase) {
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    for (let i = 0; i < BURST_COUNT; i++) {
-      if (video && canvas) {
-        canvas.width = video.videoWidth || 1280;
-        canvas.height = video.videoHeight || 720;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
-          shots.push(dataUrl.split(",")[1]);
-        }
-      }
-      await new Promise((r) => setTimeout(r, BURST_INTERVAL_MS));
-    }
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    setFrames(shots);
-    setPhase("review");
-  }
-
-  function beginCountdown() {
-    setPhase("countdown");
-    let remaining = 3;
-    setCountdown(remaining);
-    const interval = setInterval(() => {
-      remaining -= 1;
-      if (remaining <= 0) {
-        clearInterval(interval);
-        captureBurst();
-      } else {
-        setCountdown(remaining);
-      }
-    }, 700);
+    if (!video || !canvas) return;
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+    setShots((prev) => [...prev, { label, base64: dataUrl.split(",")[1] }]);
+    if (next === "review") streamRef.current?.getTracks().forEach((t) => t.stop());
+    setPhase(next);
   }
 
   function retake() {
-    setFrames([]);
+    setShots([]);
     startCamera();
   }
 
   async function submit() {
     setPhase("submitting");
     setErrorMsg(null);
+    const context = `Screens captured, in order: ${shots.map((s) => s.label).join(", ")}.`;
     try {
       const res = await fetch("/api/sessions/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId,
-          images: frames.map((base64, i) => ({
-            base64,
+          images: shots.map((s, i) => ({
+            base64: s.base64,
             mediaType: "image/jpeg",
-            filename: `switch-frame-${i}.jpg`,
+            filename: `dji-${i}-${s.label.toLowerCase().replace(/\s+/g, "-")}.jpg`,
           })),
-          context: "",
-          rawData: { frameCount: frames.length, burstIntervalMs: BURST_INTERVAL_MS },
+          context,
+          rawData: { shotLabels: shots.map((s) => s.label) },
         }),
       });
       const data = await res.json();
@@ -117,7 +103,6 @@ export default function SwitchFlow({ sessionId }: { sessionId: string }) {
   if (phase === "instructions") {
     return (
       <div className="space-y-4">
-        <StepIndicator steps={STEPS} current={0} />
         <ol className="list-decimal space-y-2 pl-5 text-sm">
           {config.sellerInstructions.map((step, i) => (
             <li key={i}>{step}</li>
@@ -154,47 +139,54 @@ export default function SwitchFlow({ sessionId }: { sessionId: string }) {
     );
   }
 
-  const stepIndex =
-    phase === "review" ? 2 : phase === "submitting" || phase === "submit-error" ? 3 : 1;
+  const stepIndex = phase === "submitting" || phase === "submit-error" ? 3 : phase === "review" ? 2 : 1;
 
   return (
     <div className="space-y-4">
       <StepIndicator steps={STEPS} current={stepIndex} />
-      <div className="relative overflow-hidden rounded-xl border border-border bg-black">
-        <video ref={videoRef} className="aspect-video w-full object-cover" playsInline muted />
-        {phase === "countdown" && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-5xl font-bold text-white">
-            {countdown || "Go!"}
-          </div>
-        )}
-        {phase === "capturing" && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-lg font-medium text-white">
-            Capturing… move both sticks in circles
-          </div>
-        )}
-      </div>
-      <canvas ref={canvasRef} className="hidden" />
 
-      {phase === "ready" && (
-        <button
-          onClick={beginCountdown}
-          className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90"
-        >
-          Start test
-        </button>
+      {phase !== "review" && (
+        <>
+          <div className="relative overflow-hidden rounded-xl border border-border bg-black">
+            <video ref={videoRef} className="aspect-video w-full object-cover" playsInline muted />
+          </div>
+          <canvas ref={canvasRef} className="hidden" />
+          <p className="text-sm text-foreground/70">
+            {phase === "capture-status"
+              ? "Frame the aircraft's status screen (serial number, binding status, warnings) and capture it."
+              : "Now frame the battery detail screen and capture it."}
+          </p>
+          <button
+            onClick={() =>
+              phase === "capture-status"
+                ? captureCurrent("Status screen", "capture-battery")
+                : captureCurrent("Battery screen", "review")
+            }
+            className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90"
+          >
+            {phase === "capture-status" ? "Capture status screen" : "Capture battery screen"}
+          </button>
+        </>
       )}
 
       {phase === "review" && (
         <div className="space-y-3">
-          <div className="grid grid-cols-5 gap-1">
-            {frames.map((f, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img key={i} src={`data:image/jpeg;base64,${f}`} alt={`frame ${i + 1}`} className="aspect-square rounded object-cover" />
+          <div className="grid grid-cols-2 gap-2">
+            {shots.map((s, i) => (
+              <div key={i}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`data:image/jpeg;base64,${s.base64}`}
+                  alt={s.label}
+                  className="aspect-video w-full rounded-lg object-cover"
+                />
+                <p className="mt-1 text-center text-xs text-foreground/50">{s.label}</p>
+              </div>
             ))}
           </div>
           <div className="flex gap-2">
             <button onClick={retake} className="flex-1 rounded-lg border border-border py-2 text-sm font-medium">
-              Retake
+              Retake both
             </button>
             <button
               onClick={submit}

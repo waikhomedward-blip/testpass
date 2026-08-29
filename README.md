@@ -6,10 +6,19 @@ on the actual device, and the buyer gets an automatic evidence verdict — DEMON
 INCONCLUSIVE — before paying. See the product thesis this build implements for the full reasoning
 behind the design choices below.
 
-**V1 scope:** Nintendo Switch (controller-drift test via the built-in calibration screen) and GoPro
-(Bluetooth identity/battery + guided status photo) are fully wired up. DJI and Camera are stubbed as
-"Coming Soon" tiles — building those out is real, separate engineering work per the thesis doc's
-category-spike constraints.
+**Four categories are wired up**, each an honestly-labeled primitive per the thesis doc's capability
+discipline (nothing is marked CONFIRMED until it's actually worked under realistic seller conditions):
+
+| Category | Primitive | Capability label |
+|---|---|---|
+| Nintendo Switch | Guided capture of the built-in controller-drift calibration screen | MODEL-DEPENDENT |
+| GoPro | Bluetooth LE identity/battery + guided status photo | EXPERIMENTAL |
+| DJI Drone | Guided capture of the DJI app's own status & battery screens | EXPERIMENTAL |
+| Digicam | Fresh one-time-code challenge shot at wide vs. full zoom | EXPERIMENTAL |
+
+Every one of these is a spike, not a finished product claim — see `src/lib/primitives.ts` for the
+full evidence primitive definitions (instructions, evaluation prompt, capability label) per category.
+Promoting a label to CONFIRMED only happens after it demonstrably works with real sellers.
 
 **Stripe is intentionally stubbed.** The paywall UI, the `unlocked` column, and the checkout route
 all exist; `src/lib/stripe.ts` is the one file to fill in when you're ready to charge for real. Until
@@ -46,7 +55,8 @@ during development (use a tunnel like `ngrok`, or just test on the deployed Verc
 1. **Buyer** picks a category on the front page, optionally pastes the listing URL, gets a
    `/seller/[id]` link to send.
 2. **Seller** opens that link, follows the on-screen steps (camera capture for Switch; Bluetooth +
-   photo for GoPro), and submits. No login, nothing installed.
+   photo for GoPro; two guided app-screen photos for DJI; two file-uploaded photos of a fresh
+   one-time code for Digicam), and submits. No login, nothing installed.
 3. The submit route sends the capture straight to Claude (`src/lib/evaluate.ts`) with a
    category-specific evaluation prompt, gets back a strict-JSON verdict, and stores it as an
    `evidence` row. Session status and evidence verdict are tracked as two separate fields — never

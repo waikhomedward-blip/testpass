@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CATEGORY_CONFIG, CATEGORY_ORDER } from "@/lib/primitives";
+import CategoryIcon from "@/components/CategoryIcon";
 
 export default function Home() {
   return (
@@ -27,19 +28,29 @@ export default function Home() {
                 cfg.available ? "hover:border-accent hover:shadow-sm" : "opacity-60"
               }`}
             >
-              <div className="flex items-start justify-between">
-                <h3 className="font-semibold">{cfg.label}</h3>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                    <CategoryIcon category={cat} className="h-5 w-5" />
+                  </span>
+                  <h3 className="font-semibold">{cfg.label}</h3>
+                </div>
                 {!cfg.available && (
-                  <span className="rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-foreground/50">
+                  <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-foreground/50">
                     Coming soon
                   </span>
                 )}
               </div>
-              <p className="mt-2 text-sm text-foreground/60">{cfg.shortPitch}</p>
+              <p className="mt-3 text-sm text-foreground/60">{cfg.shortPitch}</p>
               {cfg.available && (
-                <p className="mt-4 text-sm font-medium text-accent group-hover:underline">
-                  Start a test →
-                </p>
+                <div className="mt-4 flex items-center justify-between">
+                  <p className="text-sm font-medium text-accent group-hover:underline">Start a test →</p>
+                  {cfg.capabilityLabel !== "CONFIRMED" && (
+                    <span className="text-[11px] font-medium uppercase tracking-wide text-foreground/40">
+                      {cfg.capabilityLabel}
+                    </span>
+                  )}
+                </div>
               )}
             </div>
           );

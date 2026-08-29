@@ -52,3 +52,16 @@ alter table evidence enable row level security;
 insert into storage.buckets (id, name, public)
 values ('captures', 'captures', false)
 on conflict (id) do nothing;
+
+-- Some Supabase projects don't auto-grant table privileges to service_role
+-- on newly created tables (you'll see a Postgres "permission denied" /
+-- code 42501 error from the app if this step is missing). service_role
+-- already bypasses RLS by design (see the note at the top of this file) —
+-- these grants are the separate, lower-level table-privilege layer that
+-- RLS bypass doesn't substitute for.
+grant usage on schema public to service_role;
+grant select, insert, update, delete on public.sessions to service_role;
+grant select, insert, update, delete on public.evidence to service_role;
+grant usage, select on all sequences in schema public to service_role;
+alter default privileges in schema public grant select, insert, update, delete on tables to service_role;
+alter default privileges in schema public grant usage, select on sequences to service_role;

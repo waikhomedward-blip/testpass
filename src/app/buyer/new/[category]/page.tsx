@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
-import { CATEGORY_CONFIG } from "@/lib/primitives";
+import { CATEGORY_CONFIG, CATEGORY_ORDER } from "@/lib/primitives";
 import { Category } from "@/lib/types";
 import NewSessionForm from "@/components/buyer/NewSessionForm";
+import CategoryIcon from "@/components/CategoryIcon";
 
 export default async function NewSessionPage(props: PageProps<"/buyer/new/[category]">) {
   const { category } = await props.params;
@@ -9,12 +10,16 @@ export default async function NewSessionPage(props: PageProps<"/buyer/new/[categ
   if (!config) notFound();
 
   if (!config.available) {
+    const liveLabels = CATEGORY_ORDER.filter((c) => CATEGORY_CONFIG[c].available).map(
+      (c) => CATEGORY_CONFIG[c].label
+    );
     return (
       <div className="mx-auto w-full max-w-lg flex-1 px-6 py-16">
         <h1 className="text-2xl font-semibold">{config.label} is coming soon</h1>
         <p className="mt-3 text-foreground/60">
           TestPass ships one category at a time so each test is actually reliable. {config.label}{" "}
-          testing ({config.functionTested}) is on the roadmap — Switch and GoPro are live today.
+          testing ({config.functionTested}) is on the roadmap
+          {liveLabels.length > 0 ? ` — ${liveLabels.join(", ")} ${liveLabels.length === 1 ? "is" : "are"} live today.` : "."}
         </p>
       </div>
     );
@@ -22,7 +27,12 @@ export default async function NewSessionPage(props: PageProps<"/buyer/new/[categ
 
   return (
     <div className="mx-auto w-full max-w-lg flex-1 px-6 py-16">
-      <h1 className="text-2xl font-semibold">Test a {config.label}</h1>
+      <div className="flex items-center gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+          <CategoryIcon category={config.category} className="h-5 w-5" />
+        </span>
+        <h1 className="text-2xl font-semibold">Test a {config.label}</h1>
+      </div>
       <p className="mt-2 text-foreground/60">{config.shortPitch}</p>
       <div className="mt-6">
         <NewSessionForm config={config} />

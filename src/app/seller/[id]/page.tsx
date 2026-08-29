@@ -4,6 +4,8 @@ import { CATEGORY_CONFIG } from "@/lib/primitives";
 import { isExpired } from "@/lib/time";
 import SwitchFlow from "@/components/seller/SwitchFlow";
 import GoProFlow from "@/components/seller/GoProFlow";
+import DJIFlow from "@/components/seller/DJIFlow";
+import DigicamFlow from "@/components/seller/DigicamFlow";
 
 export default async function SellerSessionPage(props: PageProps<"/seller/[id]">) {
   const { id } = await props.params;
@@ -59,6 +61,8 @@ export default async function SellerSessionPage(props: PageProps<"/seller/[id]">
       <div className="mt-6">
         {session.category === "switch" && <SwitchFlow sessionId={id} />}
         {session.category === "gopro" && <GoProFlow sessionId={id} />}
+        {session.category === "dji" && <DJIFlow sessionId={id} />}
+        {session.category === "camera" && <DigicamFlow sessionId={id} />}
       </div>
     </div>
   );

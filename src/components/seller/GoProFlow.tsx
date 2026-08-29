@@ -2,8 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CATEGORY_CONFIG } from "@/lib/primitives";
+import StepIndicator from "./StepIndicator";
 
 const config = CATEGORY_CONFIG.gopro;
+const STEPS = ["Bluetooth", "Photo", "Review", "Submit"];
 
 // Minimal Web Bluetooth typings for the subset this component uses — the
 // full API isn't in lib.dom.d.ts by default, and this keeps us honest
@@ -208,6 +210,7 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
   if (phase === "instructions") {
     return (
       <div className="space-y-4">
+        <StepIndicator steps={STEPS} current={0} />
         <ol className="list-decimal space-y-2 pl-5 text-sm">
           {config.sellerInstructions.map((step, i) => (
             <li key={i}>{step}</li>
@@ -237,6 +240,7 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
   if (phase === "camera-instructions") {
     return (
       <div className="space-y-4">
+        <StepIndicator steps={STEPS} current={1} />
         <p className="text-sm">
           {bt.succeeded ? "Bluetooth connected. " : ""}Now take one clear photo of the GoPro&apos;s
           screen showing its battery and storage status.
@@ -271,8 +275,12 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
     );
   }
 
+  const stepIndex =
+    phase === "review" ? 2 : phase === "submitting" || phase === "submit-error" ? 3 : 1;
+
   return (
     <div className="space-y-4">
+      <StepIndicator steps={STEPS} current={stepIndex} />
       <div className="relative overflow-hidden rounded-xl border border-border bg-black">
         <video ref={videoRef} className={`aspect-video w-full object-cover ${frame ? "hidden" : ""}`} playsInline muted />
         {frame && (

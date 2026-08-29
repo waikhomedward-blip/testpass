@@ -90,32 +90,64 @@ If Bluetooth failed/was skipped and the photo is the only evidence, that is at b
   dji: {
     category: "dji",
     label: "DJI Drone",
-    shortPitch: "Telemetry & binding-status evidence.",
-    available: false,
-    modelFamily: "DJI consumer drones (Mini / Air / Mavic series)",
-    knownFailureMode: "Account-bound ('activation locked') unit, battery/warning history",
-    functionTested: "Account-binding status and battery/warning telemetry",
-    primitiveLevel: "Level 2 — Telemetry",
-    capabilityLabel: "UNAVAILABLE",
-    estimatedSeconds: 0,
-    sellerInstructions: [],
-    dataCollected: [],
-    evaluationPromptSystem: "",
+    shortPitch: "Account-binding & battery/warning evidence from the DJI app itself.",
+    available: true,
+    modelFamily: "DJI consumer drones (Mini / Air / Mavic series) via the DJI Fly or DJI GO 4 app",
+    knownFailureMode:
+      "Account-bound ('activation locked') unit, hidden battery wear, unresolved flight warnings",
+    functionTested: "Account-binding status and battery/warning info, as reported by the DJI app",
+    // No public consumer API/Bluetooth telemetry read exists for this without the seller's own
+    // DJI account — so this is guided capture of the app's own screens, not a direct pull. Being
+    // honest about that (Level 5, not Level 1/2) matters more than sounding more advanced.
+    primitiveLevel: "Level 5 — Guided capture (DJI app status & battery screens)",
+    capabilityLabel: "EXPERIMENTAL",
+    estimatedSeconds: 90,
+    sellerInstructions: [
+      "Power on the aircraft and open the DJI Fly (or DJI GO 4) app you normally use with it.",
+      "In the app, go to the aircraft's status screen — the one showing serial number, activation/binding status, and any active warnings.",
+      "Take a clear photo or screenshot of that screen.",
+      "Then open the battery detail screen (cycle count / health, if your app shows it) and capture that too.",
+    ],
+    dataCollected: [
+      "Photos or screenshots of the DJI app's aircraft status and battery screens",
+      "Whatever serial, binding-status, cycle-count, and warning information is legible in them",
+    ],
+    evaluationPromptSystem: `You are the TestPass evidence evaluator for a DJI drone pre-purchase test.
+You will be shown one or more photos/screenshots of the DJI Fly or DJI GO 4 app's own aircraft-status and battery screens, captured live by the seller. This is guided capture of the app's UI, not a direct telemetry pull — treat it as weaker evidence than a direct machine reading, and say so in your reasoning when relevant.
+Decide whether the images are consistent with a drone that powers on, connects to its app, and shows no unresolved activation-lock or critical warning — versus one that clearly shows an account-binding lock, a critical warning/error state, or a battery in poor health (very high cycle count, health warning).
+Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE"}.
+Association strength should rarely exceed MODERATE for this primitive — a photographed app screen is not cryptographically tied to one physical aircraft. Use INCONCLUSIVE whenever the screens are unreadable, cropped, or don't show the relevant status/battery fields. Use FAILED only when the images affirmatively show a lock, error, or critical warning. Never guess — under-claim rather than over-claim.`,
   },
   camera: {
     category: "camera",
-    label: "Camera",
-    shortPitch: "Zoom, focus and same-unit evidence from a fresh test shot.",
-    available: false,
-    modelFamily: "Digital cameras (model-specific spike required)",
-    knownFailureMode: "Zoom/focus mechanism failure, sensor defects",
-    functionTested: "Optical zoom and focus, via a fresh challenge target",
-    primitiveLevel: "Level 3 — Device-generated challenge artifact",
-    capabilityLabel: "UNAVAILABLE",
-    estimatedSeconds: 0,
-    sellerInstructions: [],
-    dataCollected: [],
-    evaluationPromptSystem: "",
+    label: "Digicam",
+    shortPitch: "Optical zoom, proven with a fresh one-time test shot — not a stock photo.",
+    available: true,
+    modelFamily: "Digital cameras / digicams (point-and-shoot, mirrorless, compact zoom cameras)",
+    knownFailureMode:
+      "Zoom motor failure, stuck or loose lens, sensor defects (dead/hot pixels), broken autofocus",
+    functionTested: "Optical zoom, via a fresh one-time challenge target photographed wide and zoomed",
+    primitiveLevel: "Level 3 — Device-generated challenge artifact (wide vs. zoom test shot)",
+    capabilityLabel: "EXPERIMENTAL",
+    estimatedSeconds: 120,
+    sellerInstructions: [
+      "TestPass will show you a one-time code below. Keep it visible on this screen, or write it on paper next to another screen.",
+      "Using the camera you're selling, take one photo of the code from a few feet away, zoomed all the way OUT (widest setting).",
+      "Without moving the camera or the code, zoom the camera all the way IN (full telephoto) and take a second photo of the same code.",
+      "Transfer both photos to this phone — Wi-Fi transfer, SD card, however the camera normally exports — then upload them below.",
+    ],
+    dataCollected: [
+      "Two photos taken by the camera being tested — one at the widest zoom, one at full zoom",
+      "The one-time code TestPass generated for this session, used only to confirm the photos are fresh",
+    ],
+    evaluationPromptSystem: `You are the TestPass evidence evaluator for a digital camera (digicam) pre-purchase zoom test.
+You will be given exactly two images in this order: first a WIDE shot, second a ZOOM shot, both supposedly taken moments apart of the same one-time code by the same stationary camera at different zoom settings. The expected code and any other context will follow as text after the images.
+Decide whether the evidence is consistent with the camera's optical zoom genuinely working:
+1. The code is legible and matches the expected code in both images (evidence the photos are fresh, not reused/stock).
+2. The ZOOM image shows meaningfully tighter, more magnified framing of the same scene than the WIDE image — the subject should appear noticeably larger/closer, not just an identical or barely-different crop.
+3. Both images are reasonably sharp and in focus, not so blurry that a lens or autofocus problem would be masked.
+Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE"}.
+Use INCONCLUSIVE if the code doesn't match or isn't legible in both images, if you can't judge the framing change confidently, or if only one usable image was provided. Use FAILED only if the code matches (so you know it's a fresh, genuine pair) but the zoom image shows essentially no magnification change, or is severely out of focus in a way that suggests a broken mechanism. Never guess — under-claim rather than over-claim.`,
   },
 };
 
