@@ -11,7 +11,7 @@ create extension if not exists pgcrypto;
 
 create table if not exists sessions (
   id text primary key,
-  category text not null check (category in ('switch', 'gopro', 'dji', 'camera')),
+  category text not null check (category in ('switch', 'gopro', 'dji', 'camera', 'ps5')),
   model text,
   listing_url text,
   listing_notes text,
@@ -80,3 +80,9 @@ alter default privileges in schema public grant usage, select on sequences to se
 -- re-run — both are no-ops if the columns are already there.
 alter table evidence add column if not exists image_paths jsonb;
 alter table evidence add column if not exists cosmetic_note text;
+
+-- Existing projects created before the PS5 owner-validation experiment need
+-- their category check widened. Safe to re-run.
+alter table sessions drop constraint if exists sessions_category_check;
+alter table sessions add constraint sessions_category_check
+  check (category in ('switch', 'gopro', 'dji', 'camera', 'ps5'));

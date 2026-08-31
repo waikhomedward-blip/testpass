@@ -51,5 +51,14 @@ export default function CategoryIcon({ category, className }: { category: Catego
           <path d="M8 7l1.2-2h5.6L16 7" />
         </svg>
       );
+    case "ps5":
+      return (
+        <svg {...common}>
+          <rect x="3" y="8" width="18" height="9" rx="4.5" />
+          <path d="M8 10.5v4M6 12.5h4" />
+          <circle cx="16" cy="11.5" r="0.8" fill="currentColor" stroke="none" />
+          <circle cx="18" cy="13.5" r="0.8" fill="currentColor" stroke="none" />
+        </svg>
+      );
   }
 }
