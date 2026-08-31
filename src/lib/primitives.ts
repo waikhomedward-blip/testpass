@@ -1,10 +1,26 @@
 // The Proof Primitive Router — V1 implementation.
 //
-// Each category maps to one primary evidence primitive. The PS5 entry below
-// is intentionally hidden from CATEGORY_ORDER while we run owner validation.
+// Per the TestPass V4.1 thesis: "The initial router may be a deterministic
+// configuration table." This file IS that table. It is an internal concept —
+// sellers and buyers never see the word "primitive" or "router"; they see
+// "TestPass selects the shortest practical test for this device."
+//
+// Each category maps to exactly one primary evidence primitive for V1
+// (one category, one model family, one failure, one primitive — per the
+// doc's V1 implementation constraint). Everything here is honestly labeled
+// with a CapabilityLabel: nothing is marked CONFIRMED just because it is
+// technically possible — only once it has actually worked under realistic
+// seller conditions.
 
 import { Category, CapabilityLabel } from "./types";
 
+// Appended to every category's evaluationPromptSystem. Every submission may
+// include one extra image at the end — a general photo of the physical
+// device, not part of the functional test — so the buyer can actually see
+// the item and its cosmetic condition. This is intentionally weak evidence
+// (a photo alone barely proves anything), so it must never move the verdict
+// or association_strength; it only ever adds an optional, purely
+// descriptive note.
 const PRODUCT_PHOTO_ADDENDUM = `
 
 You may also be given one additional image after the diagnostic ones, of the whole physical device — the context text will say so if present. This photo is NOT diagnostic evidence and must never change your verdict or association_strength; it exists only so the buyer can see the real item. If it's present and something is clearly visible worth mentioning (visible damage, missing parts, or nothing notable and it looks consistent with a normal used unit), add a one-sentence "cosmetic_note" field to your JSON with a plain, neutral observation. If no such photo was given, or nothing can be confidently judged from it, omit "cosmetic_note" or leave it an empty string — never guess condition you can't see clearly.`;
@@ -13,7 +29,7 @@ export interface CategoryConfig {
   category: Category;
   label: string;
   shortPitch: string;
-  available: boolean;
+  available: boolean; // false = "Coming Soon" stub
   modelFamily: string;
   knownFailureMode: string;
   functionTested: string;
@@ -90,16 +106,20 @@ If Bluetooth failed/was skipped and the photo is the only evidence, that is at b
     shortPitch: "Account-binding & battery/warning evidence from the DJI app itself.",
     available: true,
     modelFamily: "DJI consumer drones (Mini / Air / Mavic series) via the DJI Fly or DJI GO 4 app",
-    knownFailureMode: "Account binding, hidden battery use, unresolved flight warnings",
+    knownFailureMode:
+      "Account-bound ('activation locked') unit, hidden battery wear, unresolved flight warnings",
     functionTested: "Account-binding status and battery/warning info, as reported by the DJI app",
+    // No public consumer API/Bluetooth telemetry read exists for this without the seller's own
+    // DJI account — so this is guided capture of the app's own screens, not a direct pull. Being
+    // honest about that (Level 5, not Level 1/2) matters more than sounding more advanced.
     primitiveLevel: "Level 5 — Guided capture (DJI app status & battery screens)",
     capabilityLabel: "EXPERIMENTAL",
     estimatedSeconds: 120,
     sellerInstructions: [
       "Power on the aircraft and open the DJI Fly (or DJI GO 4) app you normally use with it.",
-      "In the app, go to the aircraft's status screen — the one showing serial number, binding status, and any active warnings.",
+      "In the app, go to the aircraft's status screen — the one showing serial number, activation/binding status, and any active warnings.",
       "Take a clear photo or screenshot of that screen.",
-      "Then open the battery detail screen (cycle count, if your app shows it) and capture that too.",
+      "Then open the battery detail screen (cycle count / health, if your app shows it) and capture that too.",
     ],
     dataCollected: [
       "Photos or screenshots of the DJI app's aircraft status and battery screens",
@@ -108,9 +128,9 @@ If Bluetooth failed/was skipped and the photo is the only evidence, that is at b
     ],
     evaluationPromptSystem: `You are the TestPass evidence evaluator for a DJI drone pre-purchase test.
 You will be shown one or more photos/screenshots of the DJI Fly or DJI GO 4 app's own aircraft-status and battery screens, captured live by the seller. This is guided capture of the app's UI, not a direct telemetry pull — treat it as weaker evidence than a direct machine reading, and say so in your reasoning when relevant.
-Decide whether the images are consistent with a drone that powers on, connects to its app, and shows the relevant account-binding, battery, and warning information clearly.
+Decide whether the images are consistent with a drone that powers on, connects to its app, and shows no unresolved activation-lock or critical warning — versus one that clearly shows an account-binding lock, a critical warning/error state, or a battery in poor health (very high cycle count, health warning).
 Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
-Association strength should rarely exceed MODERATE for this primitive. Use INCONCLUSIVE whenever the screens are unreadable, cropped, or don't show the relevant fields. Never treat ordinary binding by itself as proof the aircraft is unusable. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
+Association strength should rarely exceed MODERATE for this primitive — a photographed app screen is not cryptographically tied to one physical aircraft. Use INCONCLUSIVE whenever the screens are unreadable, cropped, or don't show the relevant status/battery fields. Use FAILED only when the images affirmatively show a lock, error, or critical warning. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
   },
   camera: {
     category: "camera",
@@ -118,7 +138,8 @@ Association strength should rarely exceed MODERATE for this primitive. Use INCON
     shortPitch: "Optical zoom, proven with a fresh one-time test shot — not a stock photo.",
     available: true,
     modelFamily: "Digital cameras / digicams (point-and-shoot, mirrorless, compact zoom cameras)",
-    knownFailureMode: "Zoom motor failure, stuck or loose lens, sensor defects, broken autofocus",
+    knownFailureMode:
+      "Zoom motor failure, stuck or loose lens, sensor defects (dead/hot pixels), broken autofocus",
     functionTested: "Optical zoom, via a fresh one-time challenge target photographed wide and zoomed",
     primitiveLevel: "Level 3 — Device-generated challenge artifact (wide vs. zoom test shot)",
     capabilityLabel: "EXPERIMENTAL",
@@ -137,11 +158,11 @@ Association strength should rarely exceed MODERATE for this primitive. Use INCON
     evaluationPromptSystem: `You are the TestPass evidence evaluator for a digital camera (digicam) pre-purchase zoom test.
 You will be given exactly two images in this order: first a WIDE shot, second a ZOOM shot, both supposedly taken moments apart of the same one-time code by the same stationary camera at different zoom settings. The expected code and any other context will follow as text after the images.
 Decide whether the evidence is consistent with the camera's optical zoom genuinely working:
-1. The code is legible and matches the expected code in both images.
-2. The ZOOM image shows meaningfully tighter, more magnified framing of the same scene than the WIDE image.
-3. Both images are reasonably sharp and in focus.
+1. The code is legible and matches the expected code in both images (evidence the photos are fresh, not reused/stock).
+2. The ZOOM image shows meaningfully tighter, more magnified framing of the same scene than the WIDE image — the subject should appear noticeably larger/closer, not just an identical or barely-different crop.
+3. Both images are reasonably sharp and in focus, not so blurry that a lens or autofocus problem would be masked.
 Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
-Use INCONCLUSIVE if the code doesn't match or isn't legible in both images, if you can't judge the framing change confidently, or if only one usable image was provided. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
+Use INCONCLUSIVE if the code doesn't match or isn't legible in both images, if you can't judge the framing change confidently, or if only one usable image was provided. Use FAILED only if the code matches (so you know it's a fresh, genuine pair) but the zoom image shows essentially no magnification change, or is severely out of focus in a way that suggests a broken mechanism. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
   },
   ps5: {
     category: "ps5",
