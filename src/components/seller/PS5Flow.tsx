@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { newChallengeCode } from "@/lib/challenge";
 import { submitCapture } from "@/lib/submit-capture";
 import StepIndicator from "./StepIndicator";
@@ -20,7 +20,11 @@ type Phase =
   | "submit-error";
 
 export default function PS5Flow({ sessionId }: { sessionId: string }) {
-  const challenge = useMemo(() => `TP-${newChallengeCode()}`, []);
+  // Generate the one-time challenge only after hydration. Client Components
+  // are also pre-rendered on the server, so generating randomness during the
+  // initial render can make the server HTML differ from the first browser
+  // render and cause a hydration mismatch.
+  const [challenge, setChallenge] = useState<string | null>(null);
   const [phase, setPhase] = useState<Phase>("prepare");
   const [consoleInfo, setConsoleInfo] = useState<string | null>(null);
   const [onlineAccess, setOnlineAccess] = useState<string | null>(null);
@@ -32,7 +36,12 @@ export default function PS5Flow({ sessionId }: { sessionId: string }) {
 
   const { videoRef, canvasRef, state: cameraState, videoReady, setVideoReady, start, stop, capture } = useCamera();
 
+  useEffect(() => {
+    setChallenge(`TP-${newChallengeCode()}`);
+  }, []);
+
   async function beginConsoleInfoCapture() {
+    if (!challenge) return;
     await start();
     setPhase("console-info");
   }
@@ -64,7 +73,7 @@ export default function PS5Flow({ sessionId }: { sessionId: string }) {
   }
 
   async function submit() {
-    if (!consoleInfo || !onlineAccess) return;
+    if (!challenge || !consoleInfo || !onlineAccess) return;
     setPhase("submitting");
     setErrorMsg(null);
     try {
@@ -123,14 +132,17 @@ export default function PS5Flow({ sessionId }: { sessionId: string }) {
         </div>
         <div className="rounded-lg border border-border bg-background p-4">
           <p className="text-xs font-medium uppercase tracking-wide text-foreground/50">Your one-time console name</p>
-          <p className="mt-1 font-mono text-2xl font-semibold tracking-wider">{challenge}</p>
+          <p className="mt-1 font-mono text-2xl font-semibold tracking-wider">
+            {challenge ?? "Preparing…"}
+          </p>
           <p className="mt-2 text-xs text-foreground/50">
             On the PS5, open Settings → System → System Software → Console Information and temporarily set the console name to this code. If your console does not offer a rename option there, stop — that is useful validation feedback.
           </p>
         </div>
         <button
           onClick={beginConsoleInfoCapture}
-          className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90"
+          disabled={!challenge}
+          className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40"
         >
           I renamed it — turn on camera
         </button>
