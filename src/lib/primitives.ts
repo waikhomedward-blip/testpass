@@ -103,34 +103,47 @@ If Bluetooth failed/was skipped and the photo is the only evidence, that is at b
   dji: {
     category: "dji",
     label: "DJI Drone",
-    shortPitch: "Account-binding & battery/warning evidence from the DJI app itself.",
+    shortPitch: "Account-binding & battery/warning evidence from the DJI app itself, proven fresh.",
     available: true,
     modelFamily: "DJI consumer drones (Mini / Air / Mavic series) via the DJI Fly or DJI GO 4 app",
     knownFailureMode:
       "Account-bound ('activation locked') unit, hidden battery wear, unresolved flight warnings",
-    functionTested: "Account-binding status and battery/warning info, as reported by the DJI app",
+    functionTested: "Account-binding status and battery/warning info, as reported by the DJI app, associated with a fresh one-time code",
     // No public consumer API/Bluetooth telemetry read exists for this without the seller's own
     // DJI account — so this is guided capture of the app's own screens, not a direct pull. Being
     // honest about that (Level 5, not Level 1/2) matters more than sounding more advanced.
-    primitiveLevel: "Level 5 — Guided capture (DJI app status & battery screens)",
+    //
+    // Hardening note (evidence-strength audit): this category previously had
+    // no freshness mechanism at all — a seller could submit any old
+    // screenshot. A one-time code is the minimum fix, and it only proves
+    // CAPTURE freshness (this photo was taken during this session) — it
+    // does NOT prove the DJI app's connection to the aircraft is live right
+    // now, since a static app screen isn't a rename or a live telemetry
+    // read. The evaluator prompt below is deliberately explicit about that
+    // distinction rather than letting a fresh code imply more than it does.
+    primitiveLevel: "Level 5 — Guided capture (DJI app status & battery screens), associated with a fresh one-time code",
     capabilityLabel: "EXPERIMENTAL",
     estimatedSeconds: 120,
     sellerInstructions: [
       "Power on the aircraft and open the DJI Fly (or DJI GO 4) app you normally use with it.",
       "In the app, go to the aircraft's status screen — the one showing serial number, activation/binding status, and any active warnings.",
-      "Take a clear photo or screenshot of that screen.",
-      "Then open the battery detail screen (cycle count / health, if your app shows it) and capture that too.",
+      "Hold the one-time TestPass code below next to your phone/tablet showing that screen, and capture both together, clearly readable.",
+      "Then, without ending this TestPass camera session, open the battery detail screen (cycle count / health, if your app shows it) and capture that too.",
     ],
     dataCollected: [
-      "Photos or screenshots of the DJI app's aircraft status and battery screens",
-      "Whatever serial, binding-status, cycle-count, and warning information is legible in them",
+      "One fresh photo of the DJI app's aircraft status screen together with the one-time code",
+      "One fresh photo of the DJI app's battery detail screen",
+      "The one-time code TestPass generated for this session, used only to confirm the status-screen photo is fresh",
       "One general photo of the drone itself",
     ],
     evaluationPromptSystem: `You are the TestPass evidence evaluator for a DJI drone pre-purchase test.
-You will be shown one or more photos/screenshots of the DJI Fly or DJI GO 4 app's own aircraft-status and battery screens, captured live by the seller. This is guided capture of the app's UI, not a direct telemetry pull — treat it as weaker evidence than a direct machine reading, and say so in your reasoning when relevant.
+You will be given two images plus text containing the expected one-time challenge code: Image 1 is the DJI Fly or DJI GO 4 app's aircraft-status screen (serial number, activation/binding status, warnings) with the one-time code held in the same frame. Image 2 is the app's battery detail screen, captured immediately afterward in the same session.
+Two different things are being proven here, and you must not collapse them into one:
+1. CAPTURE freshness — whether Image 1's code is legible, clearly co-located with the app screen in the same photo (not separate or edited-looking), and matches the expected code. This proves the PHOTO was taken during this TestPass session. If the code doesn't match or isn't legible, association is WEAK regardless of how healthy the app screens look.
+2. UNDERLYING APP-STATE freshness — whether the app is actually connected to the aircraft live right now, versus showing a static/cached screen from a past session. A photographed app screen cannot prove this the way a device-embedded rename or a live telemetry read can — DJI's own app UI doesn't change state in a way TestPass can verify from a photo alone. Do not claim or imply that a fresh code proves the app's connection or the underlying values (cycle count, warnings) are live-read at this exact moment — only that this photo, and whatever it shows, is fresh from this session.
 Decide whether the images are consistent with a drone that powers on, connects to its app, and shows no unresolved activation-lock or critical warning — versus one that clearly shows an account-binding lock, a critical warning/error state, or a battery in poor health (very high cycle count, health warning).
 Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
-Association strength should rarely exceed MODERATE for this primitive — a photographed app screen is not cryptographically tied to one physical aircraft. Use INCONCLUSIVE whenever the screens are unreadable, cropped, or don't show the relevant status/battery fields. Use FAILED only when the images affirmatively show a lock, error, or critical warning. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
+Association strength should rarely exceed MODERATE even when the code matches — a photographed app screen is not cryptographically tied to one physical aircraft, and it is capped by the same underlying-app-state limitation described above. Use WEAK if the code doesn't clearly co-locate with Image 1. Use INCONCLUSIVE whenever the screens are unreadable, cropped, or don't show the relevant status/battery fields, or the code doesn't match. Use FAILED only when the images affirmatively show a lock, error, or critical warning. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
   },
   camera: {
     category: "camera",
@@ -198,33 +211,42 @@ Do NOT infer that a console is banned from a generic network, account, sign-in, 
   epson: {
     category: "epson",
     label: "Epson Photo Printer",
-    shortPitch: "Print-head health, proven with the printer's own nozzle-check pattern — not a stock photo.",
+    shortPitch: "Print-head health, proven with the printer's own nozzle-check pattern, printed live on camera.",
     available: true,
     modelFamily: "Epson SureColor P700 / P900 (pigment photo inkjet printers)",
     knownFailureMode:
       "Clogged or dead print-head nozzles from disuse — common and expensive on idle pigment-ink photo printers, sometimes costing as much as the printer itself to repair",
-    functionTested: "Print-head nozzle condition, via the printer's own built-in nozzle-check test page",
-    primitiveLevel: "Level 3 — Device-generated challenge artifact (manufacturer nozzle-check pattern)",
+    functionTested: "Print-head nozzle condition, via the printer's own built-in nozzle-check test page, captured while it prints",
+    primitiveLevel: "Level 3 — Device-generated challenge artifact (manufacturer nozzle-check pattern), captured while printing",
     capabilityLabel: "EXPERIMENTAL",
-    estimatedSeconds: 120,
+    estimatedSeconds: 150,
+    // Hardening note (evidence-strength audit): a handwritten code next to
+    // the finished page only proved the PHOTO was fresh — nothing stopped a
+    // seller from placing today's code next to an old good printout, since
+    // paper has no freshness signal of its own. Fixed by adding a burst
+    // capturing the page actively printing/ejecting before the final still,
+    // so the evidence shows this physical page being produced live during
+    // the session. The held-code final capture is kept (not replaced) as a
+    // legible confirmatory read of the finished pattern.
     sellerInstructions: [
       "Load a sheet of plain paper in the printer.",
-      "On the printer's own screen, go to the menu icon → Maintenance → Print Head Nozzle Check → Start, and let it print the test page.",
-      "Write the one-time TestPass code below directly on that same printed page in pen, or place it clearly next to the page.",
-      "Take one photo of the whole printed page with the code and every nozzle-check line readable.",
+      "On the printer's own screen, go to the menu icon → Maintenance → Print Head Nozzle Check → Start.",
+      "As soon as it starts printing, quickly point your camera at the printer's output area and capture the burst — TestPass needs to see the page actively coming out, not just the finished result.",
+      "Once the page has fully printed, write the one-time TestPass code below directly on it in pen, or place it clearly next to the page, and take one photo of the whole page with the code and every nozzle-check line readable.",
     ],
     dataCollected: [
-      "One fresh photo of the printer's own nozzle-check test page, with the one-time code visible on or next to it",
-      "The one-time code TestPass generated for this session, used only to confirm the page is fresh",
+      "A short burst of photos of the printer actively printing the nozzle-check page",
+      "One fresh photo of the finished nozzle-check test page, with the one-time code visible on or next to it",
+      "The one-time code TestPass generated for this session, used only to confirm the final page photo is fresh",
       "One general photo of the printer itself",
     ],
     evaluationPromptSystem: `You are the TestPass evidence evaluator for an Epson photo-printer nozzle-check test.
-You will be given one image: a photo of the printer's own built-in nozzle-check test page (printed from its Maintenance menu), with a handwritten or adjacent one-time code. The expected code and any other context will follow as text after the image.
-Decide whether the evidence is consistent with a healthy print head:
-1. The one-time code is legible, clearly co-located with the printed page in the same photo (not a separate or edited-looking image), and matches the expected code — evidence this is a fresh page from this session, not a reused old printout.
-2. Every color's nozzle-check line is present with no visible gaps or breaks (a clean pattern per Epson's own documentation shows continuous lines with no missing segments).
+You will be given a short burst of photos taken in sequence of the printer actively printing its own built-in nozzle-check page (from its Maintenance menu), followed by one final photo of the finished page with a handwritten or adjacent one-time code. The expected code and any other context will follow as text after the images.
+Two different things matter here, and you must not collapse them:
+1. LIVENESS of the print — the burst should show the printer actively working (paper feeding/ejecting, print head in motion, or the page visibly not-yet-complete) rather than a static already-finished page held in front of the camera repeatedly. This is what proves the nozzle-check page was produced during this session, not that a page from weeks ago is simply sitting next to a fresh code.
+2. The RESULT — the final image's one-time code must be legible, clearly co-located with the printed page in the same photo (not separate or edited-looking), and match the expected code; and every color's nozzle-check line must be present with no visible gaps or breaks (a clean pattern per Epson's own documentation shows continuous lines with no missing segments) for a healthy read.
 Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
-Association strength should rarely exceed MODERATE — a printed page and a handwritten code are not cryptographically tied to one physical printer, and if the code isn't clearly in the same frame as the test page, treat association as WEAK. Use INCONCLUSIVE if the code doesn't match or isn't legible, the page is blurry or cropped, or you can't confidently judge whether lines are missing.
+Association strength should rarely exceed MODERATE — even with a live-print burst, this is a printed page and a handwritten code, not cryptographically tied to one physical printer. Treat association as WEAK if the code isn't clearly in the same frame as the test page, OR if the burst doesn't clearly show an active, in-progress print (e.g. it looks like the same finished page in every burst frame) even though the final page and code check out — that ambiguity means you're back to relying on the weaker code-only claim. Use INCONCLUSIVE if the code doesn't match or isn't legible, the final page is blurry or cropped, or you can't confidently judge whether lines are missing.
 Follow Epson's own three-tier guidance for the pattern itself — do not call a gappy pattern healthy or normal:
 - DEMONSTRATED: every color's line is complete, with no visible gaps or breaks. This is Epson's own "print head is fine" reading.
 - FAILED (for this narrow nozzle-check test only): the pattern clearly shows gaps, faint segments, or breaks in one or more colors — Epson's own guidance is that this means Head Cleaning (or, if most of a line is missing, Power Cleaning) is needed, not that the printer is fine. Say so plainly in the reasoning (e.g. "the nozzle check shows gaps; Epson's own guidance is to run Head Cleaning") and explicitly do not claim or imply permanent print-head damage — cleaning routinely resolves this, and TestPass only observed one printed pattern, not the outcome of cleaning.
@@ -331,13 +353,25 @@ Use INCONCLUSIVE whenever the calibration screen is not clearly visible, the pho
       "One fresh photo showing current Meta Quest Store access",
       "Timing data for the capture",
     ],
+    // Hardening note (evidence-strength audit): re-evaluated rather than
+    // changed. Device Info is a static panel, not a rename like PS5/Xbox/NAS
+    // use — so a held code next to it proves the PHOTO is fresh but not
+    // that the headset's own state was touched this session, the same
+    // structural gap as Prusa/Epson had. Deliberately NOT adding a new
+    // capture step or seller friction for this: Image 2 (live Quest Store
+    // access) already carries the primitive's real current-state weight, so
+    // the fix here is honesty in the evaluator prompt about which image
+    // proves what, not a new mechanism.
     evaluationPromptSystem: `You are the TestPass evidence evaluator for a Meta Quest owner-validation test. This is not a certification and it does not prove the headset's complete condition.
 You will receive exactly two diagnostic images plus text containing the expected one-time challenge code.
 Image 1 should show a phone screen displaying the headset's cast Device Info screen (with a visible serial number) together with the one-time challenge code, held in the same frame and both clearly readable.
 Image 2 should clearly show the Meta Quest Store or another unmistakably online Meta service loaded with real content immediately afterward.
+Two different things are being proven here, and you must not collapse them into one:
+1. Image 1 proves CAPTURE freshness only — that this photo was taken during this session. Device Info is a static panel on Meta Quest (unlike a console rename), so it cannot prove the headset's own state was touched or changed this session, only that the code and the panel were photographed together just now.
+2. Image 2 is the stronger, primary evidence of CURRENT state — a live online service actually loading with real content is harder to fake with old material than a static info panel, and it's what the positive claim mainly rests on.
 The positive claim is narrow: this headset demonstrated access to Meta's online services during this TestPass session. It does NOT rule out a remote block being applied later — Meta's own return-fraud enforcement can flag a device after a period of apparently normal use, and no primitive captured at a single point in time can rule that out.
 Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": ""}.
-Use DEMONSTRATED only if BOTH images are clear and the code matches. Association strength must not exceed MODERATE, and only when the code and the cast Device Info screen are unmistakably in the same unedited-looking frame — if the code looks separate, spliced, or ambiguous, treat association as WEAK instead.
+Use DEMONSTRATED only if BOTH images are clear and the code matches. Association strength must not exceed MODERATE, and only when the code and the cast Device Info screen are unmistakably in the same unedited-looking frame — if the code looks separate, spliced, or ambiguous, treat association as WEAK instead. Even at MODERATE, do not describe Image 1 in your reasoning as proving the headset's identity was freshly established — say only that the photo is fresh; attribute the session's real strength to Image 2's live Store load.
 Use INCONCLUSIVE if the code/serial is unreadable, the Store is not clearly loaded, the images are ambiguous, or any connection/account/network failure prevents a confident positive conclusion.
 Do NOT infer that a headset is blocked from a generic network, account, sign-in, or loading delay. Use FAILED only if the supplied evidence itself unambiguously shows the exact tested function cannot work (e.g. an explicit "this device can't be activated" style block screen appears instead of the expected content) — otherwise prefer INCONCLUSIVE. Never guess or over-claim.`,
   },
@@ -383,38 +417,52 @@ Association strength should rarely exceed MODERATE — a browser screenshot phot
   printer3d: {
     category: "printer3d",
     label: "3D Printer",
-    shortPitch: "Mechanical health, proven with the printer's own built-in Selftest — not a stock photo.",
+    shortPitch: "Mechanical health, proven live while the printer's own Selftest is actually running.",
     available: true,
     modelFamily: "Prusa MK3 / MK3S / MK3S+ / MK4 / MK4S / MINI / MINI+ (models with the built-in Selftest feature)",
     knownFailureMode:
       "Silent mechanical/electrical degradation from use or idle time — nozzle heater/thermistor faults, fan failures, drifting axis/belt tension, dead filament sensor — invisible from a listing photo",
-    functionTested: "Core mechanical/electrical health (fans, heaters, axes, belts, filament sensor), via the printer's own built-in Selftest",
+    functionTested: "Core mechanical/electrical health (fans, heaters, axes, belts, filament sensor), via the printer's own built-in Selftest, captured live while it's actively running",
     // Bambu Lab explicitly excluded from V1: their "self test" only appears
     // in community forum threads, never in Bambu's own wiki — no
     // first-party documentation confirms it as an equivalent feature. Only
     // Prusa's Selftest (help.prusa3d.com) is officially documented.
-    primitiveLevel: "Level 3 — Device-generated challenge artifact (manufacturer Selftest result screen)",
+    //
+    // Hardening note (evidence-strength audit): Prusa's own Knowledge Base
+    // confirms "you can always check the results of the previously
+    // completed selftest from LCD Menu - Calibration - Calibrations &
+    // Tests" — meaning the original design (one photo of the final result
+    // screen + a held code) only proved the PHOTO was fresh, not that
+    // Selftest was actually RUN this session. A seller could show an old
+    // good result under today's code. Fixed by capturing a live burst
+    // DURING the run instead of a code-adjacent still: Prusa's docs confirm
+    // the run shows live per-step progress on screen, which the "previously
+    // completed results" history view cannot reproduce. No challenge code
+    // needed — same idiom as Switch/Steam Deck/ROG Ally, where live-only
+    // on-screen state is itself the freshness proof. The completed result
+    // screen is kept as a second, optional-strength confirmatory capture.
+    primitiveLevel: "Level 5 — Guided capture (live in-progress Selftest, plus completed result screen)",
     capabilityLabel: "EXPERIMENTAL",
-    estimatedSeconds: 180,
+    estimatedSeconds: 210,
     sellerInstructions: [
-      "On the printer's LCD, go to Calibration → Selftest and start it. Stay nearby — a few steps (Loadcell, Gearbox, Filament sensor) need you to respond on screen.",
-      "When Selftest finishes, leave the result screen showing on the LCD.",
-      "Write the one-time TestPass code below on paper next to the printer, or hold it beside the screen.",
-      "Take one photo of the whole LCD result screen with the code clearly readable in the same frame.",
+      "On the printer's LCD, go to Calibration → Selftest and start it.",
+      "As soon as it's actively running — before it finishes — tap the button below to turn on your camera, then start the capture right away. TestPass needs to see it live, not just the final result.",
+      "Stay nearby — a few steps (Loadcell, Gearbox, Filament sensor) need you to respond on screen.",
+      "Once Selftest finishes, capture the final result screen too.",
     ],
     dataCollected: [
-      "One fresh photo of the printer's own Selftest result screen, with the one-time code visible in the same frame",
-      "The one-time code TestPass generated for this session, used only to confirm the photo is fresh",
+      "A short burst of photos of the LCD while Selftest is actively running",
+      "One photo of the completed Selftest result screen",
       "One general photo of the printer itself",
     ],
     evaluationPromptSystem: `You are the TestPass evidence evaluator for a Prusa 3D printer Selftest check.
-You will be given one image: a photo of the printer's own built-in Selftest result screen (from LCD Menu → Calibration → Selftest), with a handwritten or adjacent one-time code. The expected code and any other context will follow as text after the image.
-Decide whether the evidence is consistent with a mechanically healthy printer:
-1. The one-time code is legible, clearly co-located with the LCD screen in the same photo (not a separate or edited-looking image), and matches the expected code — evidence this is a fresh result from this session, not a reused old screen.
-2. The Selftest result screen shows the checked components (fans, heaters, axes, belts, filament sensor) as passed/OK, with no visible error or failure indicator for any component.
+You will be given a short burst of photos taken in sequence of the printer's LCD while Selftest was actively running (from LCD Menu → Calibration → Selftest), followed by one final photo of the completed Selftest result screen.
+Two different things matter here, and you must not collapse them:
+1. LIVENESS of the run — the burst photos should show the LCD in an active, in-progress test state (e.g. a specific component currently being checked, a live progress indicator, changing status between frames) — NOT the same static "previously completed selftest" summary/history screen repeated across every frame. Prusa's own Selftest history view only shows a completed past result, not this kind of live in-progress state, so seeing genuine in-progress content across the burst is what proves this Selftest was actually running during this session, not just that a photo is fresh.
+2. The RESULT — the final image should show the checked components (fans, heaters, axes, belts, filament sensor) as passed/OK, with no visible error or failure indicator for any component.
 Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
-Association strength should rarely exceed MODERATE — a photographed LCD screen and a handwritten code are not cryptographically tied to one physical printer, and if the code isn't clearly in the same frame as the result screen, treat association as WEAK. Use INCONCLUSIVE if the code doesn't match or isn't legible, the screen is blurry, cropped, or partially obscured, or you can't confidently tell whether every checked component passed.
-Use FAILED only when the screen affirmatively shows an error or failed component for this narrow Selftest only — word it as "this printer's own Selftest reported a problem with [component]," and explicitly do not claim or imply the printer is unusable or unrepairable; Prusa's own troubleshooting guidance applies to the flagged component. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
+Use INCONCLUSIVE if the burst doesn't clearly show a live in-progress state (e.g. it looks like the same static screen in every frame, suggesting the burst may have been taken after the fact rather than during a real run), if the final result screen is blurry, cropped, or partially obscured, or if you can't confidently tell whether every checked component passed. Association strength should rarely exceed MODERATE — this is still a photographed LCD screen, not a cryptographic device binding — and treat it as WEAK if the burst is ambiguous about liveness even though the final result looks fine.
+Use FAILED only when the result screen affirmatively shows an error or failed component for this narrow Selftest only — word it as "this printer's own Selftest reported a problem with [component]," and explicitly do not claim or imply the printer is unusable or unrepairable; Prusa's own troubleshooting guidance applies to the flagged component. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
   },
   projector: {
     category: "projector",
