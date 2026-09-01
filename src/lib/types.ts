@@ -1,4 +1,4 @@
-export type Category = "switch" | "gopro" | "dji" | "camera" | "ps5" | "epson" | "xbox" | "steamdeck";
+export type Category = "switch" | "gopro" | "dji" | "camera" | "ps5" | "epson" | "xbox" | "steamdeck" | "quest" | "nas";
 
 export type SessionStatus =
   | "NOT_STARTED"

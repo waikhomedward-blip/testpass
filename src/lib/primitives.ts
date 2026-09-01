@@ -300,7 +300,87 @@ Decide whether the photos are consistent with:
 Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
 Use INCONCLUSIVE whenever the calibration screen is not clearly visible, the photos are blurry, too dark, or you cannot confidently read stick position in at least 3 of the frames. Use FAILED only when the photos clearly show a stick that fails to center at rest or fails to move despite the seller's motion. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
   },
+  quest: {
+    category: "quest",
+    label: "Meta Quest",
+    shortPitch: "Account-lock risk check: fresh device-info code + current Quest Store access, cast to a phone.",
+    available: true,
+    modelFamily: "Meta Quest 2 / Quest 3 / Quest 3S / Quest Pro",
+    knownFailureMode:
+      "Meta remotely blocking a headset flagged through its own return-fraud process — the device can go from working to a bare \"This device can't be activated\" error with no buyer-side way to check a blocklist before paying, and no appeal once it happens",
+    functionTested: "Current Meta Quest Store/account access, associated with a fresh device-info code, cast from the headset to a phone",
+    primitiveLevel: "Experimental guided challenge capture (device identity + online-service access, via casting)",
+    capabilityLabel: "EXPERIMENTAL",
+    estimatedSeconds: 150,
+    // Quest's display is inside the headset, facing the wearer — there's no
+    // way for an external camera to film it directly (the "awkward to film
+    // while worn" problem). Meta's own Casting feature solves this: it's a
+    // live mirror of whatever the headset is currently showing, sent to the
+    // Meta Horizon companion phone app. So the seller wears the headset and
+    // drives it; the buyer's TestPass camera films the seller's PHONE
+    // screen (which is showing the cast), the same way PS5/Xbox capture a
+    // TV. No new runner primitive needed.
+    sellerInstructions: [
+      "Put on the headset and, using the Meta Horizon app on a phone already paired to it, start Casting to that phone (both on the same Wi-Fi).",
+      "In the headset, go to Settings → System → Device Info so the cast phone screen shows the serial number.",
+      "Hold the one-time TestPass code next to that cast phone screen and capture both together, clearly readable.",
+      "Without ending this TestPass camera session, open the Meta Quest Store in the headset (still cast) and wait for real content to load, then capture it.",
+    ],
+    dataCollected: [
+      "One fresh photo of the cast Device Info screen together with the one-time code",
+      "One fresh photo showing current Meta Quest Store access",
+      "Timing data for the capture",
+    ],
+    evaluationPromptSystem: `You are the TestPass evidence evaluator for a Meta Quest owner-validation test. This is not a certification and it does not prove the headset's complete condition.
+You will receive exactly two diagnostic images plus text containing the expected one-time challenge code.
+Image 1 should show a phone screen displaying the headset's cast Device Info screen (with a visible serial number) together with the one-time challenge code, held in the same frame and both clearly readable.
+Image 2 should clearly show the Meta Quest Store or another unmistakably online Meta service loaded with real content immediately afterward.
+The positive claim is narrow: this headset demonstrated access to Meta's online services during this TestPass session. It does NOT rule out a remote block being applied later — Meta's own return-fraud enforcement can flag a device after a period of apparently normal use, and no primitive captured at a single point in time can rule that out.
+Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": ""}.
+Use DEMONSTRATED only if BOTH images are clear and the code matches. Association strength must not exceed MODERATE, and only when the code and the cast Device Info screen are unmistakably in the same unedited-looking frame — if the code looks separate, spliced, or ambiguous, treat association as WEAK instead.
+Use INCONCLUSIVE if the code/serial is unreadable, the Store is not clearly loaded, the images are ambiguous, or any connection/account/network failure prevents a confident positive conclusion.
+Do NOT infer that a headset is blocked from a generic network, account, sign-in, or loading delay. Use FAILED only if the supplied evidence itself unambiguously shows the exact tested function cannot work (e.g. an explicit "this device can't be activated" style block screen appears instead of the expected content) — otherwise prefer INCONCLUSIVE. Never guess or over-claim.`,
+  },
+  nas: {
+    category: "nas",
+    label: "Synology NAS",
+    shortPitch: "Drive-health check: the NAS's own official Healthy/Warning/Critical report, proven fresh.",
+    available: true,
+    modelFamily: "Synology DiskStation / RackStation (DSM 6/7)",
+    knownFailureMode:
+      "One or more drives inside the enclosure silently failing or degraded — invisible from the outside, expensive to replace, and easy for a seller to not mention if they never checked",
+    functionTested: "Drive health status (Healthy / Warning / Critical), via DSM's own Storage Manager, associated with a fresh server-name challenge",
+    primitiveLevel: "Level 3 — Device-generated challenge artifact (DSM's own drive health report)",
+    capabilityLabel: "EXPERIMENTAL",
+    estimatedSeconds: 150,
+    // Scope A (guided capture of DSM's own official web dashboard) chosen
+    // over Scope B (direct SMART/RAID telemetry integration): DSM already
+    // computes and labels drive health as Healthy/Warning/Critical, so a
+    // bespoke telemetry pull would duplicate a first-party judgment DSM
+    // already makes, for a lot more engineering and an ongoing API-version
+    // maintenance burden. DSM is accessed via a browser on a screen — the
+    // seller photographs that screen with a phone, the same way PS5/Xbox
+    // capture a TV. No new runner primitive or file-upload step needed.
+    sellerInstructions: [
+      "On a computer, log in to your NAS's DSM web interface and go to Control Panel → Network (General tab).",
+      "Temporarily change the Server Name to the one-time TestPass code below, then Apply.",
+      "Go to Storage Manager → HDD/SSD and capture that screen (showing the new server name somewhere in the browser, e.g. the tab or page header) together with the drive health status, both readable in one photo of your monitor.",
+      "Without ending this TestPass camera session, you can change the server name back afterward if you'd like — that doesn't affect this test.",
+    ],
+    dataCollected: [
+      "One fresh photo of the DSM Storage Manager drive health page together with the one-time server-name code",
+      "The one-time code TestPass generated for this session, used only to confirm the page is fresh",
+      "One general photo of the NAS enclosure itself",
+    ],
+    evaluationPromptSystem: `You are the TestPass evidence evaluator for a Synology NAS drive-health test. This is not a certification and it does not prove the enclosure's complete condition (fans, power supply, network ports are not covered).
+You will be given one image: a photo of a monitor showing the DSM web interface's Storage Manager drive health page, with the one-time server-name code visible somewhere in the same browser window (e.g. the browser tab, window title, or a DSM header showing the renamed server). The expected code and any other context will follow as text after the image.
+Decide whether the evidence is consistent with a healthy NAS:
+1. The one-time code is legible as the DSM server's own name somewhere in the captured browser window, matching the expected code — evidence this is a fresh, current session and not a reused old screenshot.
+2. Every listed drive shows DSM's own "Healthy" status. DSM's own labels are the ground truth here — do not second-guess a Healthy label, and do not invent a judgment DSM itself doesn't make.
+Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
+Association strength should rarely exceed MODERATE — a browser screenshot photographed off a monitor is not cryptographically tied to one physical NAS, and if the code isn't clearly part of the same captured window as the drive list, treat association as WEAK. Use INCONCLUSIVE if the code doesn't match or isn't legible, the page is blurry or cropped, or you can't confidently read every drive's status. Use FAILED only if DSM's own page clearly shows at least one drive as "Warning" or "Critical" — say so plainly and do not speculate about which drive or how urgent, since TestPass only observed DSM's label, not the underlying SMART data. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
+  },
 };
 
 // PS5 stays intentionally hidden from the public homepage while owner validation runs.
-export const CATEGORY_ORDER: Category[] = ["switch", "gopro", "dji", "camera", "epson", "xbox", "steamdeck"];
+export const CATEGORY_ORDER: Category[] = ["switch", "gopro", "dji", "camera", "epson", "xbox", "steamdeck", "quest", "nas"];

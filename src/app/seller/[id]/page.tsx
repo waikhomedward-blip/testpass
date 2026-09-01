@@ -10,6 +10,8 @@ import PS5Flow from "@/components/seller/PS5Flow";
 import EpsonFlow from "@/components/seller/EpsonFlow";
 import XboxFlow from "@/components/seller/XboxFlow";
 import SteamDeckFlow from "@/components/seller/SteamDeckFlow";
+import MetaQuestFlow from "@/components/seller/MetaQuestFlow";
+import NASFlow from "@/components/seller/NASFlow";
 
 export default async function SellerSessionPage(props: PageProps<"/seller/[id]">) {
   const { id } = await props.params;
@@ -71,6 +73,8 @@ export default async function SellerSessionPage(props: PageProps<"/seller/[id]">
         {session.category === "epson" && <EpsonFlow sessionId={id} />}
         {session.category === "xbox" && <XboxFlow sessionId={id} />}
         {session.category === "steamdeck" && <SteamDeckFlow sessionId={id} />}
+        {session.category === "quest" && <MetaQuestFlow sessionId={id} />}
+        {session.category === "nas" && <NASFlow sessionId={id} />}
       </div>
     </div>
   );

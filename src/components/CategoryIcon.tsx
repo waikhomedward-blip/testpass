@@ -83,5 +83,21 @@ export default function CategoryIcon({ category, className }: { category: Catego
           <circle cx="16.5" cy="12.5" r="1.8" />
         </svg>
       );
+    case "quest":
+      return (
+        <svg {...common}>
+          <rect x="2.5" y="8" width="19" height="9" rx="4" />
+          <circle cx="8" cy="12.5" r="2" />
+          <circle cx="16" cy="12.5" r="2" />
+        </svg>
+      );
+    case "nas":
+      return (
+        <svg {...common}>
+          <rect x="6" y="3" width="12" height="18" rx="1.5" />
+          <path d="M8.5 7h7M8.5 12h7" />
+          <circle cx="9" cy="16.5" r="0.9" fill="currentColor" stroke="none" />
+        </svg>
+      );
   }
 }
