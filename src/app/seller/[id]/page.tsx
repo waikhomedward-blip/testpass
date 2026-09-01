@@ -12,6 +12,9 @@ import XboxFlow from "@/components/seller/XboxFlow";
 import SteamDeckFlow from "@/components/seller/SteamDeckFlow";
 import MetaQuestFlow from "@/components/seller/MetaQuestFlow";
 import NASFlow from "@/components/seller/NASFlow";
+import Printer3DFlow from "@/components/seller/Printer3DFlow";
+import ProjectorFlow from "@/components/seller/ProjectorFlow";
+import ROGAllyFlow from "@/components/seller/ROGAllyFlow";
 
 export default async function SellerSessionPage(props: PageProps<"/seller/[id]">) {
   const { id } = await props.params;
@@ -75,6 +78,9 @@ export default async function SellerSessionPage(props: PageProps<"/seller/[id]">
         {session.category === "steamdeck" && <SteamDeckFlow sessionId={id} />}
         {session.category === "quest" && <MetaQuestFlow sessionId={id} />}
         {session.category === "nas" && <NASFlow sessionId={id} />}
+        {session.category === "printer3d" && <Printer3DFlow sessionId={id} />}
+        {session.category === "projector" && <ProjectorFlow sessionId={id} />}
+        {session.category === "rogally" && <ROGAllyFlow sessionId={id} />}
       </div>
     </div>
   );

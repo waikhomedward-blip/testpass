@@ -380,7 +380,126 @@ Decide whether the evidence is consistent with a healthy NAS:
 Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
 Association strength should rarely exceed MODERATE — a browser screenshot photographed off a monitor is not cryptographically tied to one physical NAS, and if the code isn't clearly part of the same captured window as the drive list, treat association as WEAK. Use INCONCLUSIVE if the code doesn't match or isn't legible, the page is blurry or cropped, or you can't confidently read every drive's status. Use FAILED only if DSM's own page clearly shows at least one drive as "Warning" or "Critical" — say so plainly and do not speculate about which drive or how urgent, since TestPass only observed DSM's label, not the underlying SMART data. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
   },
+  printer3d: {
+    category: "printer3d",
+    label: "3D Printer",
+    shortPitch: "Mechanical health, proven with the printer's own built-in Selftest — not a stock photo.",
+    available: true,
+    modelFamily: "Prusa MK3 / MK3S / MK3S+ / MK4 / MK4S / MINI / MINI+ (models with the built-in Selftest feature)",
+    knownFailureMode:
+      "Silent mechanical/electrical degradation from use or idle time — nozzle heater/thermistor faults, fan failures, drifting axis/belt tension, dead filament sensor — invisible from a listing photo",
+    functionTested: "Core mechanical/electrical health (fans, heaters, axes, belts, filament sensor), via the printer's own built-in Selftest",
+    // Bambu Lab explicitly excluded from V1: their "self test" only appears
+    // in community forum threads, never in Bambu's own wiki — no
+    // first-party documentation confirms it as an equivalent feature. Only
+    // Prusa's Selftest (help.prusa3d.com) is officially documented.
+    primitiveLevel: "Level 3 — Device-generated challenge artifact (manufacturer Selftest result screen)",
+    capabilityLabel: "EXPERIMENTAL",
+    estimatedSeconds: 180,
+    sellerInstructions: [
+      "On the printer's LCD, go to Calibration → Selftest and start it. Stay nearby — a few steps (Loadcell, Gearbox, Filament sensor) need you to respond on screen.",
+      "When Selftest finishes, leave the result screen showing on the LCD.",
+      "Write the one-time TestPass code below on paper next to the printer, or hold it beside the screen.",
+      "Take one photo of the whole LCD result screen with the code clearly readable in the same frame.",
+    ],
+    dataCollected: [
+      "One fresh photo of the printer's own Selftest result screen, with the one-time code visible in the same frame",
+      "The one-time code TestPass generated for this session, used only to confirm the photo is fresh",
+      "One general photo of the printer itself",
+    ],
+    evaluationPromptSystem: `You are the TestPass evidence evaluator for a Prusa 3D printer Selftest check.
+You will be given one image: a photo of the printer's own built-in Selftest result screen (from LCD Menu → Calibration → Selftest), with a handwritten or adjacent one-time code. The expected code and any other context will follow as text after the image.
+Decide whether the evidence is consistent with a mechanically healthy printer:
+1. The one-time code is legible, clearly co-located with the LCD screen in the same photo (not a separate or edited-looking image), and matches the expected code — evidence this is a fresh result from this session, not a reused old screen.
+2. The Selftest result screen shows the checked components (fans, heaters, axes, belts, filament sensor) as passed/OK, with no visible error or failure indicator for any component.
+Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
+Association strength should rarely exceed MODERATE — a photographed LCD screen and a handwritten code are not cryptographically tied to one physical printer, and if the code isn't clearly in the same frame as the result screen, treat association as WEAK. Use INCONCLUSIVE if the code doesn't match or isn't legible, the screen is blurry, cropped, or partially obscured, or you can't confidently tell whether every checked component passed.
+Use FAILED only when the screen affirmatively shows an error or failed component for this narrow Selftest only — word it as "this printer's own Selftest reported a problem with [component]," and explicitly do not claim or imply the printer is unusable or unrepairable; Prusa's own troubleshooting guidance applies to the flagged component. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
+  },
+  projector: {
+    category: "projector",
+    label: "Projector",
+    shortPitch: "Dead pixels & panel defects, checked with the projector's own built-in test pattern — never a lumen claim.",
+    available: true,
+    modelFamily: "Epson projectors with the built-in Settings → Test Pattern menu (home and business lines)",
+    knownFailureMode:
+      "Dead/stuck pixels, panel discoloration or blotching, and gross focus unevenness as LCD panels age — none of it visible in a listing photo, and lamp/laser hour counters can be reset by a seller so they aren't trustworthy evidence",
+    functionTested: "Visible panel/image defects (dead pixels, discoloration, gross focus unevenness), via the projector's own built-in test pattern — explicitly not a brightness or lumen measurement",
+    primitiveLevel: "Level 3 — Device-generated challenge artifact (manufacturer test pattern)",
+    capabilityLabel: "EXPERIMENTAL",
+    estimatedSeconds: 120,
+    sellerInstructions: [
+      "Set up the projector pointing at any wall or screen in a reasonably dim room — no computer or HDMI source needed.",
+      "On the projector, go to Menu → Settings → Test Pattern and select a test pattern.",
+      "Hold the one-time TestPass code below in the same frame as the projected image, without blocking it.",
+      "Take one photo showing the whole projected test pattern and the code together, clearly readable.",
+    ],
+    dataCollected: [
+      "One fresh photo of the projector's own built-in test pattern, with the one-time code visible in the same frame",
+      "The one-time code TestPass generated for this session, used only to confirm the photo is fresh",
+      "One general photo of the projector itself",
+    ],
+    evaluationPromptSystem: `You are the TestPass evidence evaluator for a projector panel-defect check. This test never assesses brightness, lumen output, or lamp/laser life — those cannot be judged from an uncontrolled phone photo, and this evaluator must not attempt to infer them.
+You will be given one image: a photo of the projector's own built-in test pattern, projected onto a wall or screen, with a handwritten or held one-time code visible in the same frame. The expected code and any other context will follow as text after the image.
+Decide whether the evidence is consistent with a visually healthy panel:
+1. The one-time code is legible, clearly co-located with the projected image in the same photo (not a separate or edited-looking image), and matches the expected code — evidence this is a fresh photo from this session.
+2. The projected test pattern shows no visible dead/stuck pixels, no color blotches or discoloration, and reasonably uniform color and focus across the visible frame.
+Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer, and never mention brightness/lumens as something this test measured", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
+Association strength should rarely exceed MODERATE — a projected image and a held code are not cryptographically tied to one physical unit, and if the code isn't clearly in the same frame as the projected pattern, treat association as WEAK. Use INCONCLUSIVE if the code doesn't match or isn't legible, the room is too bright to see the pattern clearly, the photo is blurry or cropped, or the pattern isn't fully visible in frame.
+Use FAILED only when the image affirmatively shows a specific visible defect — name only what you can see (e.g. "a cluster of dead/stuck pixels is visible in the projected test pattern," or "a discolored blotch is visible in one area of the image") — never a general "broken" claim, and never a brightness/lumen judgment. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
+  },
+  rogally: {
+    category: "rogally",
+    label: "ROG Ally",
+    shortPitch: "Stick & trigger drift, tested live with ASUS's own built-in calibration screen.",
+    available: true,
+    modelFamily: "ASUS ROG Ally / ROG Ally X",
+    knownFailureMode: "Analog-stick or trigger drift, and gyro miscalibration — the most-reported hidden used-handheld defect",
+    functionTested: "Analog stick and trigger calibration (full range of motion), via Armoury Crate SE's own built-in Calibration screen",
+    primitiveLevel: "Level 5 — Guided capture (built-in calibration screen)",
+    capabilityLabel: "MODEL-DEPENDENT",
+    estimatedSeconds: 120,
+    // V1 is deliberately Calibration-only. Windows' own `powercfg
+    // /batteryreport` is a real, first-party, ~2-minute battery-health
+    // signal, but it's the first TestPass primitive that would require a
+    // seller to open a Command Prompt and paste a command — a different
+    // kind of friction than any GUI-menu step shipped so far. Flagged as a
+    // documented, technically-compatible (just another single-capture, no
+    // runner change) future addition rather than built now, per the brief's
+    // explicit warning against turning TestPass into a benchmark suite.
+    sellerInstructions: [
+      "On the ROG Ally, open Armoury Crate SE and go to the Calibration section.",
+      "Start calibration for the sticks and triggers.",
+      "Point your phone camera at the Ally's own screen so the calibration display is clearly visible.",
+      "Tap Start Test below, then slowly move both sticks in full circles and pull both triggers fully for the countdown.",
+    ],
+    dataCollected: [
+      "A short burst of photos of the on-screen calibration display",
+      "Timestamps for when the burst was captured",
+      "One general photo of the ROG Ally itself",
+    ],
+    evaluationPromptSystem: `You are the TestPass evidence evaluator for a ROG Ally stick/trigger-drift test.
+You will be shown a short burst of photos taken in sequence of the ROG Ally's own built-in Armoury Crate SE Calibration screen, while the seller was asked to move both analog sticks through their full range of motion and pull both triggers.
+Decide whether the photos are consistent with:
+- both stick and trigger indicators moving substantially and smoothly across frames (evidence they respond to input across their range), or
+- an indicator that stays off-center/off-zero at rest (possible drift), barely moves across frames (possible dead zone / stuck input), or is inconsistent/unreadable.
+Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
+Use INCONCLUSIVE whenever the calibration screen is not clearly visible, the photos are blurry, too dark, or you cannot confidently read stick/trigger position in at least 3 of the frames. Use FAILED only when the photos clearly show a stick or trigger that fails to center/zero at rest or fails to move despite the seller's motion. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
+  },
 };
 
 // PS5 stays intentionally hidden from the public homepage while owner validation runs.
-export const CATEGORY_ORDER: Category[] = ["switch", "gopro", "dji", "camera", "epson", "xbox", "steamdeck", "quest", "nas"];
+export const CATEGORY_ORDER: Category[] = [
+  "switch",
+  "gopro",
+  "dji",
+  "camera",
+  "epson",
+  "xbox",
+  "steamdeck",
+  "quest",
+  "nas",
+  "printer3d",
+  "projector",
+  "rogally",
+];

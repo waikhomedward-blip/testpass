@@ -99,5 +99,31 @@ export default function CategoryIcon({ category, className }: { category: Catego
           <circle cx="9" cy="16.5" r="0.9" fill="currentColor" stroke="none" />
         </svg>
       );
+    case "printer3d":
+      return (
+        <svg {...common}>
+          <rect x="4" y="4" width="16" height="5" rx="1" />
+          <path d="M7 9v4a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9" />
+          <path d="M9 15v4h6v-4" />
+          <circle cx="12" cy="6.5" r="0.8" fill="currentColor" stroke="none" />
+        </svg>
+      );
+    case "projector":
+      return (
+        <svg {...common}>
+          <rect x="2.5" y="8" width="13" height="8" rx="2" />
+          <circle cx="9" cy="12" r="2.6" />
+          <path d="M15.5 10.5 21 8.5v7l-5.5-2" />
+        </svg>
+      );
+    case "rogally":
+      return (
+        <svg {...common}>
+          <rect x="2.5" y="6" width="19" height="12" rx="5" />
+          <circle cx="8" cy="12" r="2" />
+          <circle cx="16.5" cy="10" r="0.8" fill="currentColor" stroke="none" />
+          <circle cx="16.5" cy="14" r="0.8" fill="currentColor" stroke="none" />
+        </svg>
+      );
   }
 }
