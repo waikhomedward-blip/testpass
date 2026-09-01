@@ -7,6 +7,9 @@ import GoProFlow from "@/components/seller/GoProFlow";
 import DJIFlow from "@/components/seller/DJIFlow";
 import DigicamFlow from "@/components/seller/DigicamFlow";
 import PS5Flow from "@/components/seller/PS5Flow";
+import EpsonFlow from "@/components/seller/EpsonFlow";
+import XboxFlow from "@/components/seller/XboxFlow";
+import SteamDeckFlow from "@/components/seller/SteamDeckFlow";
 
 export default async function SellerSessionPage(props: PageProps<"/seller/[id]">) {
   const { id } = await props.params;
@@ -65,6 +68,9 @@ export default async function SellerSessionPage(props: PageProps<"/seller/[id]">
         {session.category === "dji" && <DJIFlow sessionId={id} />}
         {session.category === "camera" && <DigicamFlow sessionId={id} />}
         {session.category === "ps5" && <PS5Flow sessionId={id} />}
+        {session.category === "epson" && <EpsonFlow sessionId={id} />}
+        {session.category === "xbox" && <XboxFlow sessionId={id} />}
+        {session.category === "steamdeck" && <SteamDeckFlow sessionId={id} />}
       </div>
     </div>
   );

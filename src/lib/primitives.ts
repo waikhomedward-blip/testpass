@@ -195,7 +195,100 @@ Use DEMONSTRATED only if BOTH images are clear and the challenge matches. Associ
 Use INCONCLUSIVE if the challenge/serial is unreadable, the Store/service is not clearly loaded, the images are ambiguous, or any connection/account/network failure prevents a confident positive conclusion.
 Do NOT infer that a console is banned from a generic network, account, sign-in, or service error. For this owner-validation experiment, use FAILED only if the supplied evidence itself unambiguously demonstrates the exact tested function cannot work for a device-specific reason; otherwise prefer INCONCLUSIVE. Never guess or over-claim.`,
   },
+  epson: {
+    category: "epson",
+    label: "Epson Photo Printer",
+    shortPitch: "Print-head health, proven with the printer's own nozzle-check pattern — not a stock photo.",
+    available: true,
+    modelFamily: "Epson SureColor P700 / P900 (pigment photo inkjet printers)",
+    knownFailureMode:
+      "Clogged or dead print-head nozzles from disuse — common and expensive on idle pigment-ink photo printers, sometimes costing as much as the printer itself to repair",
+    functionTested: "Print-head nozzle condition, via the printer's own built-in nozzle-check test page",
+    primitiveLevel: "Level 3 — Device-generated challenge artifact (manufacturer nozzle-check pattern)",
+    capabilityLabel: "EXPERIMENTAL",
+    estimatedSeconds: 120,
+    sellerInstructions: [
+      "Load a sheet of plain paper in the printer.",
+      "On the printer's own screen, go to the menu icon → Maintenance → Print Head Nozzle Check → Start, and let it print the test page.",
+      "Write the one-time TestPass code below directly on that same printed page in pen, or place it clearly next to the page.",
+      "Take one photo of the whole printed page with the code and every nozzle-check line readable.",
+    ],
+    dataCollected: [
+      "One fresh photo of the printer's own nozzle-check test page, with the one-time code visible on or next to it",
+      "The one-time code TestPass generated for this session, used only to confirm the page is fresh",
+      "One general photo of the printer itself",
+    ],
+    evaluationPromptSystem: `You are the TestPass evidence evaluator for an Epson photo-printer nozzle-check test.
+You will be given one image: a photo of the printer's own built-in nozzle-check test page (printed from its Maintenance menu), with a handwritten or adjacent one-time code. The expected code and any other context will follow as text after the image.
+Decide whether the evidence is consistent with a healthy print head:
+1. The one-time code is legible, clearly co-located with the printed page in the same photo (not a separate or edited-looking image), and matches the expected code — evidence this is a fresh page from this session, not a reused old printout.
+2. Every color's nozzle-check line is present with no visible gaps or breaks (a clean pattern per Epson's own documentation shows continuous lines with no missing segments).
+Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
+Association strength should rarely exceed MODERATE — a printed page and a handwritten code are not cryptographically tied to one physical printer, and if the code isn't clearly in the same frame as the test page, treat association as WEAK. Use INCONCLUSIVE if the code doesn't match or isn't legible, the page is blurry or cropped, or you can't confidently judge whether lines are missing. A couple of faint, minor gaps in an otherwise mostly-complete pattern is a common, normal, and usually fixable condition — do not use FAILED for that; reserve FAILED for a pattern where most lines across multiple colors are clearly missing or broken, matching Epson's own "heavily clogged" guidance. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
+  },
+  xbox: {
+    category: "xbox",
+    label: "Xbox Series X/S",
+    shortPitch: "Console-ban risk check: fresh identity code + current Microsoft Store access.",
+    available: true,
+    modelFamily: "Xbox Series X / Xbox Series S",
+    knownFailureMode:
+      "Console-level enforcement/ban that blocks normal access to Xbox network and Store services — a real, documented risk distinct from an account-level ban, and not something a casual buyer can check before paying",
+    functionTested: "Current Xbox network/Microsoft Store access, associated with a fresh one-time code",
+    primitiveLevel: "Experimental guided challenge capture (console identity + online-service access)",
+    capabilityLabel: "EXPERIMENTAL",
+    estimatedSeconds: 120,
+    sellerInstructions: [
+      "On the Xbox, go to Settings → System → Console Info to show the serial number screen.",
+      "Hold the one-time TestPass code (written on paper, or shown on another phone/device) next to that screen and capture both together, clearly readable in one photo.",
+      "Without ending this TestPass camera session, open the Microsoft Store app and wait for real content to load, then capture it.",
+    ],
+    dataCollected: [
+      "One fresh photo of the Xbox Console Info screen together with the one-time code",
+      "One fresh photo showing current Microsoft Store access",
+      "Timing data for the capture",
+    ],
+    evaluationPromptSystem: `You are the TestPass evidence evaluator for an Xbox Series X/S owner-validation test. This is not a certification and it does not prove the console's complete condition.
+You will receive exactly two diagnostic images plus text containing the expected one-time challenge code.
+Image 1 should show the Xbox Console Info screen (with a visible serial number) together with the one-time challenge code, held in the same frame and both clearly readable.
+Image 2 should clearly show the Microsoft Store or another unmistakably online Xbox service loaded with real content immediately afterward.
+The positive claim is narrow: this Xbox demonstrated access to Xbox network/Store services during this TestPass session.
+Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": ""}.
+Use DEMONSTRATED only if BOTH images are clear and the code matches. Association strength must not exceed MODERATE, and only when the code and the Console Info screen are unmistakably in the same unedited-looking frame — if the code looks separate, spliced, or ambiguous, treat association as WEAK instead, since unlike a device-embedded code this one is only proven fresh by being physically co-located in the photo.
+Use INCONCLUSIVE if the code/serial is unreadable, the Store/service is not clearly loaded, the images are ambiguous, or any connection/account/network failure prevents a confident positive conclusion.
+Do NOT infer that a console is banned from a generic network, account, sign-in, or service error. Use FAILED only if the supplied evidence itself unambiguously demonstrates the exact tested function cannot work for a device-specific reason; otherwise prefer INCONCLUSIVE. Never guess or over-claim.`,
+  },
+  steamdeck: {
+    category: "steamdeck",
+    label: "Steam Deck",
+    shortPitch: "Thumbstick drift, tested live with Steam's own built-in calibration screen.",
+    available: true,
+    modelFamily: "Steam Deck LCD / Steam Deck OLED",
+    knownFailureMode: "Analog-stick drift on one or both thumbsticks",
+    functionTested: "Analog stick calibration (both sticks, full range of motion), via Steam's own built-in test screen",
+    primitiveLevel: "Level 5 — Guided capture (built-in calibration screen)",
+    capabilityLabel: "MODEL-DEPENDENT",
+    estimatedSeconds: 120,
+    sellerInstructions: [
+      "On the Steam Deck, press the STEAM button, then go to Settings → Controller → Calibration & Advanced Settings → Joysticks.",
+      "Press Y to open the live input test screen.",
+      "Point your phone camera at the Steam Deck's own screen so the live stick-position test is clearly visible.",
+      "Tap Start Test below, then slowly move both thumbsticks in full circles for the countdown.",
+    ],
+    dataCollected: [
+      "A short burst of photos of the on-screen live joystick test",
+      "Timestamps for when the burst was captured",
+      "One general photo of the Steam Deck itself",
+    ],
+    evaluationPromptSystem: `You are the TestPass evidence evaluator for a Steam Deck thumbstick-drift test.
+You will be shown a short burst of photos taken in sequence of the Steam Deck's own built-in joystick calibration/test screen (Settings → Controller → Calibration & Advanced Settings → Joysticks), while the seller was asked to move both thumbsticks through their full range of motion.
+Decide whether the photos are consistent with:
+- both stick indicators moving substantially and smoothly across frames (evidence the sticks respond to input across their range), or
+- a stick indicator that stays off-center at rest (possible drift), barely moves across frames (possible dead zone / stuck stick), or is inconsistent/unreadable.
+Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
+Use INCONCLUSIVE whenever the calibration screen is not clearly visible, the photos are blurry, too dark, or you cannot confidently read stick position in at least 3 of the frames. Use FAILED only when the photos clearly show a stick that fails to center at rest or fails to move despite the seller's motion. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
+  },
 };
 
 // PS5 stays intentionally hidden from the public homepage while owner validation runs.
-export const CATEGORY_ORDER: Category[] = ["switch", "gopro", "dji", "camera"];
+export const CATEGORY_ORDER: Category[] = ["switch", "gopro", "dji", "camera", "epson", "xbox", "steamdeck"];

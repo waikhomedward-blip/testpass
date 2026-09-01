@@ -60,5 +60,28 @@ export default function CategoryIcon({ category, className }: { category: Catego
           <circle cx="18" cy="13.5" r="0.8" fill="currentColor" stroke="none" />
         </svg>
       );
+    case "epson":
+      return (
+        <svg {...common}>
+          <rect x="4" y="9" width="16" height="8" rx="1.5" />
+          <path d="M7 9V6a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v3" />
+          <rect x="7" y="14" width="10" height="6" />
+        </svg>
+      );
+    case "xbox":
+      return (
+        <svg {...common}>
+          <circle cx="12" cy="12" r="9" />
+          <path d="M7 7c2 2.5 3 4 5 4s3-1.5 5-4M6 18c2-3 4-5 6-5s4 2 6 5" />
+        </svg>
+      );
+    case "steamdeck":
+      return (
+        <svg {...common}>
+          <rect x="2.5" y="7" width="19" height="11" rx="4" />
+          <circle cx="7.5" cy="12.5" r="1.8" />
+          <circle cx="16.5" cy="12.5" r="1.8" />
+        </svg>
+      );
   }
 }

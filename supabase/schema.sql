@@ -11,7 +11,8 @@ create extension if not exists pgcrypto;
 
 create table if not exists sessions (
   id text primary key,
-  category text not null check (category in ('switch', 'gopro', 'dji', 'camera')),
+  category text not null
+    check (category in ('switch', 'gopro', 'dji', 'camera', 'ps5', 'epson', 'xbox', 'steamdeck')),
   model text,
   listing_url text,
   listing_notes text,
