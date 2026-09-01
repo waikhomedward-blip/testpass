@@ -101,7 +101,7 @@ export default function SessionStatus({ sessionId }: { sessionId: string }) {
             </p>
           )}
           {session.evidence.map((ev) => {
-            const { decision, explanation } = suggestDecision(ev.verdict, ev.association_strength);
+            const { decision, explanation } = suggestDecision(ev.verdict, ev.association_strength, ev.function_tested);
             const diagnosticImages = (ev.images ?? []).filter((img) => img.label !== "Photo of the device");
             const productImages = (ev.images ?? []).filter((img) => img.label === "Photo of the device");
             return (
