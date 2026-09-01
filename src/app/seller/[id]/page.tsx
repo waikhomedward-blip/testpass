@@ -6,6 +6,15 @@ import SwitchFlow from "@/components/seller/SwitchFlow";
 import GoProFlow from "@/components/seller/GoProFlow";
 import DJIFlow from "@/components/seller/DJIFlow";
 import DigicamFlow from "@/components/seller/DigicamFlow";
+import PS5Flow from "@/components/seller/PS5Flow";
+import EpsonFlow from "@/components/seller/EpsonFlow";
+import XboxFlow from "@/components/seller/XboxFlow";
+import SteamDeckFlow from "@/components/seller/SteamDeckFlow";
+import MetaQuestFlow from "@/components/seller/MetaQuestFlow";
+import NASFlow from "@/components/seller/NASFlow";
+import Printer3DFlow from "@/components/seller/Printer3DFlow";
+import ProjectorFlow from "@/components/seller/ProjectorFlow";
+import ROGAllyFlow from "@/components/seller/ROGAllyFlow";
 
 export default async function SellerSessionPage(props: PageProps<"/seller/[id]">) {
   const { id } = await props.params;
@@ -63,6 +72,15 @@ export default async function SellerSessionPage(props: PageProps<"/seller/[id]">
         {session.category === "gopro" && <GoProFlow sessionId={id} />}
         {session.category === "dji" && <DJIFlow sessionId={id} />}
         {session.category === "camera" && <DigicamFlow sessionId={id} />}
+        {session.category === "ps5" && <PS5Flow sessionId={id} />}
+        {session.category === "epson" && <EpsonFlow sessionId={id} />}
+        {session.category === "xbox" && <XboxFlow sessionId={id} />}
+        {session.category === "steamdeck" && <SteamDeckFlow sessionId={id} />}
+        {session.category === "quest" && <MetaQuestFlow sessionId={id} />}
+        {session.category === "nas" && <NASFlow sessionId={id} />}
+        {session.category === "printer3d" && <Printer3DFlow sessionId={id} />}
+        {session.category === "projector" && <ProjectorFlow sessionId={id} />}
+        {session.category === "rogally" && <ROGAllyFlow sessionId={id} />}
       </div>
     </div>
   );

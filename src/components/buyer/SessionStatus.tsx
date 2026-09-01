@@ -101,14 +101,16 @@ export default function SessionStatus({ sessionId }: { sessionId: string }) {
             </p>
           )}
           {session.evidence.map((ev) => {
-            const { decision, explanation } = suggestDecision(ev.verdict, ev.association_strength);
+            const { decision, explanation } = suggestDecision(ev.verdict, ev.association_strength, ev.function_tested);
             const diagnosticImages = (ev.images ?? []).filter((img) => img.label !== "Photo of the device");
             const productImages = (ev.images ?? []).filter((img) => img.label === "Photo of the device");
+            const bluetoothPath = getBluetoothEvidencePath(ev.raw_data);
             return (
               <div key={ev.id} className="rounded-xl border border-border bg-card p-6">
                 <div className="flex flex-wrap items-center gap-2">
                   <VerdictBadge verdict={ev.verdict} />
                   <span className="text-xs text-foreground/50">{ev.capability_label}</span>
+                  {bluetoothPath && <EvidencePathBadge path={bluetoothPath} />}
                 </div>
                 <p className="mt-3 font-medium">{ev.function_tested}</p>
                 <p className="mt-1 text-sm text-foreground/70">{ev.reasoning}</p>
@@ -166,6 +168,38 @@ function ImageGrid({ title, images }: { title: string; images: { url: string; fi
         ))}
       </div>
     </div>
+  );
+}
+
+// GoPro cleanup (evidence-strength audit): a direct Bluetooth read and a
+// photo-only fallback are materially different evidence strengths, but
+// previously that distinction only lived in freeform LLM reasoning text —
+// easy to miss at a glance. Read it straight from raw_data.bluetooth
+// (GoProFlow always submits this shape) instead, so the badge is
+// deterministic rather than depending on how the evaluator happened to
+// phrase it this time.
+function getBluetoothEvidencePath(rawData: Record<string, unknown> | null): "direct" | "photo-fallback" | null {
+  if (!rawData || typeof rawData !== "object" || !("bluetooth" in rawData)) return null;
+  const bt = (rawData as { bluetooth?: { attempted?: boolean; succeeded?: boolean } }).bluetooth;
+  if (!bt || typeof bt !== "object") return null;
+  return bt.succeeded ? "direct" : "photo-fallback";
+}
+
+function EvidencePathBadge({ path }: { path: "direct" | "photo-fallback" }) {
+  return path === "direct" ? (
+    <span
+      className="rounded-full border border-blue-500/30 bg-blue-500/10 px-2.5 py-0.5 text-xs font-semibold text-blue-600"
+      title="TestPass connected directly to the camera over Bluetooth and read its reported status — stronger evidence than a photo alone."
+    >
+      Direct device read
+    </span>
+  ) : (
+    <span
+      className="rounded-full border border-border bg-background px-2.5 py-0.5 text-xs font-medium text-foreground/60"
+      title="Bluetooth wasn't used or didn't connect — this result relies on the guided photo only, which is weaker evidence than a direct device read."
+    >
+      Photo fallback (no Bluetooth)
+    </span>
   );
 }
 
