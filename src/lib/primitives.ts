@@ -164,6 +164,38 @@ Decide whether the evidence is consistent with the camera's optical zoom genuine
 Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
 Use INCONCLUSIVE if the code doesn't match or isn't legible in both images, if you can't judge the framing change confidently, or if only one usable image was provided. Use FAILED only if the code matches (so you know it's a fresh, genuine pair) but the zoom image shows essentially no magnification change, or is severely out of focus in a way that suggests a broken mechanism. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
   },
+  ps5: {
+    category: "ps5",
+    label: "PlayStation 5",
+    shortPitch: "Owner-validation experiment: fresh console identity + current PlayStation online access.",
+    available: true,
+    modelFamily: "PlayStation 5 / PS5 Slim / PS5 Pro",
+    knownFailureMode: "Console-level restriction that prevents normal access to PlayStation online services",
+    functionTested: "Current PlayStation online access, associated with a fresh console-information challenge",
+    primitiveLevel: "Experimental guided challenge capture (console identity + online-service access)",
+    capabilityLabel: "EXPERIMENTAL",
+    estimatedSeconds: 120,
+    sellerInstructions: [
+      "Temporarily rename the console to the one-time TestPass challenge on the Console Information screen.",
+      "Capture that screen with the challenge and console serial readable.",
+      "Without ending the TestPass camera session, open PlayStation Store and capture it after live content loads.",
+    ],
+    dataCollected: [
+      "One fresh photo of Console Information showing the one-time challenge and console serial",
+      "One fresh photo showing current PlayStation online-service access",
+      "Timing data for the owner-validation experiment",
+    ],
+    evaluationPromptSystem: `You are the TestPass evidence evaluator for an EXPERIMENTAL PS5 owner-validation test. This is not a certification and it does not prove the console's complete condition.
+You will receive exactly two diagnostic images plus text containing the expected one-time console-name challenge.
+Image 1 should be the PS5 Console Information screen. For a DEMONSTRATED result, it must clearly show the expected challenge as the console name and a readable console serial number.
+Image 2 should clearly show PlayStation Store or another unmistakably online PlayStation service loaded with real content immediately afterward.
+The positive claim is narrow: this PS5 demonstrated access to PlayStation online services during this TestPass session.
+Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": ""}.
+Use DEMONSTRATED only if BOTH images are clear and the challenge matches. Association strength must not exceed MODERATE in this two-photo experimental primitive because TestPass is not yet recording an unbroken video or matching the physical serial label.
+Use INCONCLUSIVE if the challenge/serial is unreadable, the Store/service is not clearly loaded, the images are ambiguous, or any connection/account/network failure prevents a confident positive conclusion.
+Do NOT infer that a console is banned from a generic network, account, sign-in, or service error. For this owner-validation experiment, use FAILED only if the supplied evidence itself unambiguously demonstrates the exact tested function cannot work for a device-specific reason; otherwise prefer INCONCLUSIVE. Never guess or over-claim.`,
+  },
 };
 
+// PS5 stays intentionally hidden from the public homepage while owner validation runs.
 export const CATEGORY_ORDER: Category[] = ["switch", "gopro", "dji", "camera"];
