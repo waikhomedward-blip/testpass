@@ -14,7 +14,14 @@ const runnerConfig: RunnerConfig = {
     "This is deliberately narrow: it checks whether these two pieces of evidence can be captured clearly and quickly. It does not certify the console's complete condition.",
   prepare: {
     showStandardInstructions: true,
-    buttonLabel: "Turn on camera",
+    // Xbox does have an on-console rename (Settings → System → Console Info
+    // → Name, per Microsoft's own support docs) — the same mechanism PS5
+    // uses, not a weaker "hold a paper code" one. Unlike PS5, Xbox requires
+    // a restart before the new name takes effect, so that's called out
+    // explicitly right next to the code.
+    challengeHint:
+      "On the Xbox: Settings → System → Console Info → Name. Enter this code exactly, select Enter, then restart the console — the new name only shows up after a restart.",
+    buttonLabel: "I renamed it — turn on camera",
   },
   steps: [
     {
@@ -22,7 +29,7 @@ const runnerConfig: RunnerConfig = {
       id: "console-info",
       label: "Console info + code",
       instructionText: (challenge) =>
-        `Show the Xbox Console Info screen (Settings → System → Console Info) with the serial number visible, holding ${challenge ?? "your code"} in the same frame, both readable together.`,
+        `After restarting, show the Xbox Console Info screen (Settings → System → Console Info) with the console's name now reading ${challenge ?? "your code"} and the serial number both readable.`,
       buttonLabel: "Capture console info",
       quality: 0.9,
     },
@@ -37,7 +44,7 @@ const runnerConfig: RunnerConfig = {
     },
   ],
   buildSubmission: ({ challenge, productPhoto }) => ({
-    context: `Owner-validation check. Expected one-time challenge code: ${challenge}. Image 1 should show the Xbox Console Info screen together with that code in the same frame. Image 2 should show the Microsoft Store loaded with real content on the same console immediately afterward. Do not infer a console ban from a generic connection failure.${
+    context: `Owner-validation check. Expected one-time challenge code: ${challenge}. Image 1 should show the Xbox Console Info screen with the console's own name field showing that code (a fresh on-console rename, not a held object), plus a readable serial number. Image 2 should show the Microsoft Store loaded with real content on the same console immediately afterward. Do not infer a console ban from a generic connection failure.${
       productPhoto ? " The final image is a general photo of the whole console — not one of the diagnostic screens." : ""
     }`,
     rawData: { expectedCode: challenge, hasProductPhoto: !!productPhoto },
