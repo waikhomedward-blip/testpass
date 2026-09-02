@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from "./supabase/server";
 import { newSessionId } from "./ids";
+import { PAYWALL_ENABLED } from "./stripe";
 import {
   Category,
   SessionStatus,
@@ -33,11 +34,50 @@ export async function createSession(input: {
     listing_notes: input.listingNotes ?? null,
     status: "NOT_STARTED",
     expires_at,
-    unlocked: true, // paywall is stubbed off for now — see src/lib/stripe.ts
+    // Server-controlled, not a hardcoded true: when the paywall is off
+    // (PAYWALL_ENABLED false, today's default), every session starts
+    // unlocked, same as before. Once the paywall is on, new sessions must
+    // start LOCKED — otherwise a perfectly-enforced GET /api/sessions/[id]
+    // wouldn't matter, because every session would already be unlocked at
+    // creation time regardless. See the beta-readiness audit's second
+    // paywall finding.
+    unlocked: !PAYWALL_ENABLED,
   });
 
   if (error) throw error;
+  await recordEvent({ sessionId: id, eventType: "session_created", once: true, metadata: { category: input.category } });
   return { id };
+}
+
+// Minimal, durable funnel/error logging — see supabase/add-beta-readiness.sql.
+// Best-effort and never throws: a logging failure must never break the
+// actual product action it's attached to. `once: true` sets a dedupe_key
+// of `${eventType}:${sessionId}` so a milestone (session created, seller
+// opened the link, submitted, viewed the result, etc.) can only be
+// recorded once per session — a page refresh, a 4s status poll, or a
+// retried Stripe webhook delivery hits the partial unique index instead of
+// inflating a funnel count. Error events omit `once` and can repeat freely.
+// Never pass raw captured content (reasoning text, image data, listing
+// notes) in metadata — keep it to short structured fields only.
+export async function recordEvent(input: {
+  sessionId: string | null;
+  eventType: string;
+  metadata?: Record<string, unknown>;
+  once?: boolean;
+}): Promise<void> {
+  const db = getSupabaseAdmin();
+  const dedupeKey = input.once && input.sessionId ? `${input.eventType}:${input.sessionId}` : null;
+  const { error } = await db.from("events").insert({
+    session_id: input.sessionId,
+    event_type: input.eventType,
+    metadata: input.metadata ?? null,
+    dedupe_key: dedupeKey,
+  });
+  if (error && error.code !== "23505") {
+    // 23505 = unique_violation on dedupe_key, i.e. this milestone already
+    // fired for this session — expected and not worth logging as an error.
+    console.error(`recordEvent(${input.eventType}) failed:`, error.message);
+  }
 }
 
 export async function getSession(id: string): Promise<SessionWithEvidence | null> {
@@ -97,6 +137,7 @@ export async function recordEvidenceAndComplete(input: {
   imagePaths: StoredImage[];
   cosmeticNote: string | null;
   sessionStatus?: SessionStatus;
+  technicalError?: boolean;
 }): Promise<void> {
   const db = getSupabaseAdmin();
   const { error } = await db.from("evidence").insert({
@@ -120,6 +161,36 @@ export async function recordEvidenceAndComplete(input: {
       submitted_at: new Date().toISOString(),
     })
     .eq("id", input.sessionId);
+
+  // Structured, not free-text: verdict class + whether this was a content
+  // verdict or a technical failure. Never the reasoning text itself.
+  await recordEvent({
+    sessionId: input.sessionId,
+    eventType: "evaluation_result",
+    once: true,
+    metadata: { verdict: input.verdict, technicalError: !!input.technicalError },
+  });
+}
+
+// The only place sessions.unlocked ever gets set to true from a payment —
+// called exclusively from the Stripe webhook route. Idempotent: applying
+// the same update twice (a retried webhook delivery) has no additional
+// effect.
+export async function unlockSessionForPayment(input: {
+  sessionId: string;
+  stripeCheckoutSessionId: string;
+  stripePaymentIntentId: string | null;
+}): Promise<void> {
+  const db = getSupabaseAdmin();
+  const { error } = await db
+    .from("sessions")
+    .update({
+      unlocked: true,
+      stripe_checkout_session_id: input.stripeCheckoutSessionId,
+      stripe_payment_intent_id: input.stripePaymentIntentId,
+    })
+    .eq("id", input.sessionId);
+  if (error) throw error;
 }
 
 // Turns each evidence row's stored capture paths into short-lived signed

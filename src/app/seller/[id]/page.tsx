@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getSession, markSessionStarted } from "@/lib/db";
+import { getSession, markSessionStarted, recordEvent } from "@/lib/db";
 import { CATEGORY_CONFIG } from "@/lib/primitives";
 import { isExpired } from "@/lib/time";
 import SwitchFlow from "@/components/seller/SwitchFlow";
@@ -55,6 +55,10 @@ export default async function SellerSessionPage(props: PageProps<"/seller/[id]">
   }
 
   await markSessionStarted(id);
+  // The moment the seller's link is opened — distinct from "seller_started"
+  // (src/app/api/sessions/[id]/start/route.ts), which fires only once they
+  // actually tap into the guided capture, not just load this page.
+  await recordEvent({ sessionId: id, eventType: "seller_opened", once: true });
 
   return (
     <div className="mx-auto w-full max-w-lg flex-1 px-6 py-10">

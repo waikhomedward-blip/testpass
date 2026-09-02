@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { suggestDecision } from "@/lib/decision";
-import { PAYWALL_ENABLED, RESULT_PRICE_USD } from "@/lib/stripe";
+import { PAYWALL_ENABLED, RESULT_PRICE_DISPLAY } from "@/lib/stripe";
 import { SessionWithEvidence } from "@/lib/types";
 
 const STATUS_COPY: Record<string, string> = {
@@ -80,7 +80,7 @@ export default function SessionStatus({ sessionId }: { sessionId: string }) {
       {isDone && locked && (
         <div className="rounded-xl border border-border bg-card p-6">
           <p className="font-medium">Result ready</p>
-          <p className="mt-2 text-sm text-foreground/60">Unlock this result for ${RESULT_PRICE_USD}.</p>
+          <p className="mt-2 text-sm text-foreground/60">Unlock this result for {RESULT_PRICE_DISPLAY}.</p>
           <form action={`/api/checkout/${sessionId}`} method="post" className="mt-4">
             <button
               type="submit"

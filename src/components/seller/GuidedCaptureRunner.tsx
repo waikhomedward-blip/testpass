@@ -75,6 +75,10 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
     setStepIndex(0);
     setBurstSubPhase("ready");
     setPhase("capture");
+    // Fire-and-forget instrumentation ping — the seller_started funnel
+    // event (see the /start route). Never blocks or gates the actual
+    // capture flow; a failure here is invisible to the seller on purpose.
+    fetch(`/api/sessions/${sessionId}/start`, { method: "POST" }).catch(() => {});
   }
 
   function beginCountdown(step: Extract<RunnerStep, { type: "countdown-burst" }>) {

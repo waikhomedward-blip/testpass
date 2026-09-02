@@ -20,9 +20,9 @@ Every one of these is a spike, not a finished product claim — see `src/lib/pri
 full evidence primitive definitions (instructions, evaluation prompt, capability label) per category.
 Promoting a label to CONFIRMED only happens after it demonstrably works with real sellers.
 
-**Stripe is intentionally stubbed.** The paywall UI, the `unlocked` column, and the checkout route
-all exist; `src/lib/stripe.ts` is the one file to fill in when you're ready to charge for real. Until
-then `NEXT_PUBLIC_PAYWALL_ENABLED=false` means every completed result is shown for free.
+**Payments are real but off by default.** `NEXT_PUBLIC_PAYWALL_ENABLED=false` means every completed
+result is still shown for free — flip it to `true` (in Vercel's production env vars, once Stripe is
+verified end-to-end in test mode) to actually charge. See "Payments" below.
 
 ## Stack
 
@@ -73,12 +73,52 @@ labeled `CONFIRMED` / `MODEL-DEPENDENT` / `EXPERIMENTAL` / `UNAVAILABLE`. Nothin
 `CONFIRMED` status; that only happens once a primitive has actually worked under realistic seller
 conditions, which is a behavioral-testing question, not a code question.
 
+## Payments
+
+One-time Stripe Checkout, V1 scope only: no subscriptions, no Customer objects, no Billing Portal.
+
+1. Buyer clicks "Unlock result" → `POST /api/checkout/[id]` creates a Checkout Session
+   (`src/lib/stripe.ts`, card only) and redirects to Stripe.
+2. Stripe redirects back to `/buyer/session/[id]?checkout=success|cancelled` — that query param is
+   display-only, it never grants access.
+3. The actual unlock happens out-of-band: Stripe calls `POST /api/stripe/webhook`
+   (`checkout.session.completed`), which verifies the signature, confirms `payment_status === "paid"`,
+   and sets `sessions.unlocked = true` plus the two Stripe reconciliation columns
+   (`stripe_checkout_session_id`, `stripe_payment_intent_id`).
+4. `GET /api/sessions/[id]` is the enforcement point: when the paywall is on and a completed
+   session isn't unlocked, evidence content (verdict, reasoning, image paths/signed URLs) never
+   leaves that route, regardless of what the client asks for or what's in the URL.
+
+Price is server config, not code: `RESULT_PRICE_AMOUNT` (cents) and `RESULT_PRICE_CURRENCY` in
+`.env.local`/Vercel — change the number to run a pricing experiment, don't edit `src/lib/stripe.ts`.
+
+Before setting `NEXT_PUBLIC_PAYWALL_ENABLED=true` in production: test the whole loop in Stripe test
+mode first (test card, real webhook, confirm `unlocked` flips), and confirm a forged
+`?checkout=success` URL on a locked session still shows locked.
+
+## Instrumentation
+
+A minimal, durable events log — no analytics platform. See `events` in
+`supabase/add-beta-readiness.sql` and `recordEvent()`/`recordEventOnce` semantics in `src/lib/db.ts`.
+Funnel milestones (`session_created`, `seller_opened`, `seller_started`, `seller_submitted`,
+`evaluation_result`, `buyer_viewed_result`, `checkout_started`, `payment_completed`) are deduped
+per-session via a `dedupe_key` unique index, so a page refresh, a status poll, or a retried Stripe
+webhook can't inflate a funnel count. `error` events aren't deduped. Query `events` directly in the
+Supabase SQL editor for funnel counts — nothing here needs a dashboard.
+
 ## Data retention
 
-Submitted photos are uploaded to the private `captures` Supabase Storage bucket, scoped by session
-id. There's no automatic deletion job yet — add one (a scheduled Supabase Edge Function or a Vercel
-Cron hitting a small `/api/cleanup` route) before you have real users, per the thesis doc's
-data-minimization doctrine: raw artifacts should have a short, defined retention window.
+Submitted photos go to the private `captures` Supabase Storage bucket, scoped by session id.
+`GET /api/cleanup` (Vercel Cron, see `vercel.json`, runs daily) enforces:
+
+- **7 days**: raw capture images and free-form/sensitive evidence content (`reasoning`, `raw_data`,
+  `cosmetic_note`) are deleted. Storage objects are removed before the DB row is touched — a failed
+  storage deletion is retried on the next run rather than being silently marked clean.
+- **90 days**: the session and its evidence row are deleted entirely. `events` rows (already
+  de-identified — see Instrumentation) are pruned on the same window.
+
+Both windows are easy to change (`RAW_RETENTION_DAYS`/`FULL_RETENTION_DAYS` in
+`src/app/api/cleanup/route.ts`) — they're a starting policy, not a permanent one.
 
 ## What's genuinely unproven (from the thesis doc — carried forward, not solved by this build)
 

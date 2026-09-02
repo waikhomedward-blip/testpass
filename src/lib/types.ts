@@ -48,6 +48,21 @@ export interface TestSession {
   submitted_at: string | null;
   expires_at: string;
   unlocked: boolean;
+  stripe_checkout_session_id: string | null;
+  stripe_payment_intent_id: string | null;
+}
+
+// One row per funnel/error event — see supabase/add-beta-readiness.sql
+// and src/lib/db.ts's recordEvent(). Not part of SessionWithEvidence;
+// queried directly for funnel analysis, never returned to the buyer/seller
+// client.
+export interface EventRecord {
+  id: string;
+  session_id: string | null;
+  event_type: string;
+  metadata: Record<string, unknown> | null;
+  dedupe_key: string | null;
+  created_at: string;
 }
 
 export interface StoredImage {
