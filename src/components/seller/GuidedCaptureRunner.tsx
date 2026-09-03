@@ -171,9 +171,9 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
       <div className="space-y-5">
         <StepIndicator steps={STEP_LABELS} current={0} />
         {prepare.introTitle && (
-          <div className="rounded-xl border border-border bg-card p-4">
+          <div className="rounded-[var(--radius-lg)] border border-border bg-card p-4 shadow-card">
             <p className="text-sm font-semibold">{prepare.introTitle}</p>
-            {prepare.introDescription && <p className="mt-1 text-sm text-foreground/60">{prepare.introDescription}</p>}
+            {prepare.introDescription && <p className="mt-1 text-sm text-ink-secondary">{prepare.introDescription}</p>}
           </div>
         )}
         {prepare.notes && prepare.notes.length > 0 && (
@@ -191,17 +191,17 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
           </ol>
         )}
         {config.useChallenge && (
-          <div className="rounded-lg border border-border bg-background p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-foreground/50">Your one-time code</p>
-            <p className="mt-1 font-mono text-2xl font-semibold tracking-wider">{challenge ?? "Preparing…"}</p>
-            {prepare.challengeHint && <p className="mt-2 text-xs text-foreground/50">{prepare.challengeHint}</p>}
+          <div className="rounded-[var(--radius-lg)] border border-signal/25 bg-signal/[0.04] p-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-ink-secondary">Your one-time code</p>
+            <p className="mt-1 font-mono text-2xl font-semibold tracking-wider text-foreground">{challenge ?? "Preparing…"}</p>
+            {prepare.challengeHint && <p className="mt-2 text-xs text-ink-secondary">{prepare.challengeHint}</p>}
           </div>
         )}
-        <p className="text-xs text-foreground/50">TestPass will collect: {catConfig.dataCollected.join("; ")}.</p>
+        <p className="text-xs text-ink-secondary">TestPass will collect: {catConfig.dataCollected.join("; ")}.</p>
         <button
           onClick={beginCapture}
           disabled={!!config.useChallenge && !challenge}
-          className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40"
+          className="w-full rounded-lg bg-signal py-2.5 text-sm font-medium text-white transition-colors hover:bg-signal-hover disabled:opacity-40"
         >
           {prepare.buttonLabel}
         </button>
@@ -212,7 +212,10 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
   if (cameraState === "error") {
     return (
       <div className="space-y-3 text-sm">
-        <p>TestPass couldn&apos;t access your camera. Check your browser&apos;s camera permission for this site and try again.</p>
+        <p className="text-failure">
+          TestPass couldn&apos;t access your camera. Check your browser&apos;s camera permission for this
+          site and try again.
+        </p>
         <button onClick={start} className="rounded-lg border border-border px-4 py-2 text-sm font-medium">
           Try again
         </button>
@@ -273,7 +276,7 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
               <button
                 onClick={() => beginCountdown(currentStep)}
                 disabled={!videoReady}
-                className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40"
+                className="w-full rounded-lg bg-signal py-2.5 text-sm font-medium text-white transition-colors hover:bg-signal-hover disabled:opacity-40"
               >
                 Start test
               </button>
@@ -292,7 +295,7 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
             <button
               onClick={() => captureSingle(currentStep)}
               disabled={!videoReady}
-              className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40"
+              className="w-full rounded-lg bg-signal py-2.5 text-sm font-medium text-white transition-colors hover:bg-signal-hover disabled:opacity-40"
             >
               {currentStep.buttonLabel}
             </button>
@@ -319,7 +322,7 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
 
         {burstShots.length > 0 && (
           <div>
-            <p className="mb-2 text-xs font-medium text-foreground/50">{burstShots[0].label}</p>
+            <p className="mb-2 text-xs font-medium text-ink-secondary">{burstShots[0].label}</p>
             <div className="grid grid-cols-5 gap-1">
               {burstShots.map((s, i) => (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -338,7 +341,7 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
           <div className="grid grid-cols-2 gap-2">
             {singleShots.map((s, i) => (
               <div key={i}>
-                <p className="mb-1 text-xs font-medium text-foreground/50">{s.label}</p>
+                <p className="mb-1 text-xs font-medium text-ink-secondary">{s.label}</p>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`data:image/jpeg;base64,${s.base64}`}
@@ -352,14 +355,14 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
 
         {productPhoto && (
           <div>
-            <p className="mb-2 text-xs font-medium text-foreground/50">Photo of the device</p>
+            <p className="mb-2 text-xs font-medium text-ink-secondary">Photo of the device</p>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={`data:image/jpeg;base64,${productPhoto}`} alt={catConfig.label} className="aspect-video w-full rounded-lg object-cover" />
           </div>
         )}
 
         {phase === "review" && config.reviewNote && (
-          <p className="text-xs text-foreground/50">{config.reviewNote}</p>
+          <p className="text-xs text-ink-secondary">{config.reviewNote}</p>
         )}
 
         {phase === "review" && (
@@ -369,18 +372,18 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
             </button>
             <button
               onClick={submit}
-              className="flex-1 rounded-lg bg-accent py-2 text-sm font-medium text-white hover:opacity-90"
+              className="flex-1 rounded-lg bg-signal py-2 text-sm font-medium text-white transition-colors hover:bg-signal-hover"
             >
               {config.submitButtonLabel ?? "Submit"}
             </button>
           </div>
         )}
 
-        {phase === "submitting" && <p className="text-center text-sm text-foreground/60">Submitting…</p>}
+        {phase === "submitting" && <p className="text-center text-sm text-ink-secondary">Submitting…</p>}
 
         {phase === "submit-error" && (
           <div className="space-y-2 text-sm">
-            <p className="text-red-500">{errorMsg}</p>
+            <p className="text-failure">{errorMsg}</p>
             <button onClick={submit} className="rounded-lg border border-border px-4 py-2 text-sm font-medium">
               Retry submit
             </button>

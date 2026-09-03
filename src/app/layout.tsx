@@ -15,7 +15,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <header className="border-b border-border">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
             <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-              <span className="flex h-6 w-6 items-center justify-center rounded bg-accent text-xs font-bold text-white">
+              <span className="flex h-6 w-6 items-center justify-center rounded bg-signal text-xs font-bold text-white">
                 TP
               </span>
               TestPass
@@ -23,13 +23,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <nav className="flex items-center gap-2">
               <Link
                 href="/buyer/mine"
-                className="rounded-lg border border-border px-3.5 py-1.5 text-sm font-medium text-foreground/70 transition-colors hover:border-accent hover:text-accent"
+                className="rounded-lg border border-border px-3.5 py-1.5 text-sm font-medium text-foreground/70 transition-colors hover:border-signal hover:text-signal"
               >
                 My tests
               </Link>
               <Link
                 href="/"
-                className="rounded-lg bg-accent px-3.5 py-1.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
+                className="rounded-lg bg-signal px-3.5 py-1.5 text-sm font-medium text-white transition-colors hover:bg-signal-hover"
               >
                 Test a device
               </Link>
@@ -38,7 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         </header>
         <main className="flex flex-1 flex-col">{children}</main>
         <footer className="border-t border-border">
-          <div className="mx-auto max-w-5xl px-6 py-6 text-xs text-foreground/50">
+          <div className="mx-auto max-w-5xl px-6 py-6 text-xs text-ink-secondary">
             TestPass reports only what the evidence supports. A DEMONSTRATED verdict describes what
             happened during this session — it is not a guarantee of future reliability or complete
             device condition.

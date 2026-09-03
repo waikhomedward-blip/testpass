@@ -1,34 +1,131 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------------
+ * TestPass Visual System — Wave 1 design tokens.
+ *
+ * Palette, chosen and contrast-checked against the paper background
+ * (all six colors clear 4.5:1 for normal text on --paper, not just as
+ * fills): paper/ink for the base surface, signal blue as the single
+ * interactive accent, and three status colors (proof/caution/failure)
+ * that map 1:1 to the product's own verdict vocabulary (DEMONSTRATED /
+ * INCONCLUSIVE / FAILED) so a color is never introduced without a
+ * meaning it already needed. Status is never conveyed by color alone —
+ * every chip/badge that uses one of these also carries a text label.
+ *
+ * Spacing intentionally reuses Tailwind's default scale, which is
+ * already 4px-based (1=4px … 4=16px, 6=24px, 8=32px, 12=48px, 16=64px,
+ * 24=96px) — the discipline is picking from that fixed set consistently,
+ * not inventing a parallel one.
+ * ------------------------------------------------------------------- */
+
 :root {
-  --background: #fafaf9;
-  --foreground: #18181b;
+  /* Surfaces */
+  --paper: #f6f3eb;
+  --ink: #111315;
   --card: #ffffff;
-  --border: #e4e4e7;
-  --accent: #2563eb;
+  --border: #e4ddc9;
+
+  /* Text */
+  --ink-secondary: #697077; /* AA-safe (~4.5:1) on --paper and --card, replaces opacity-faded grays */
+
+  /* Interactive */
+  --signal: #1e4be8;
+  --signal-hover: #1a3fc4;
+
+  /* Status — each pair is a solid text/icon color plus a low-opacity
+     wash for chip backgrounds, kept off pure color so text stays legible
+     inside a colored chip on both themes. */
+  --proof: #0d7a53;
+  --proof-wash: #0d7a531a;
+  --caution: #9a5a00;
+  --caution-wash: #9a5a001a;
+  --failure: #b42318;
+  --failure-wash: #b423181a;
+
+  /* Legacy aliases so existing components using --background/--foreground/--accent keep working during the phased rollout */
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --accent: var(--signal);
+
+  /* Shape */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  /* Shadow — restrained: a card is set off by a hairline border first,
+     a shadow only adds a whisper of lift, never a floating-panel look. */
+  --shadow-card: 0 1px 2px rgba(17, 19, 21, 0.04), 0 1px 3px rgba(17, 19, 21, 0.06);
+  --shadow-raised: 0 2px 4px rgba(17, 19, 21, 0.05), 0 4px 10px rgba(17, 19, 21, 0.08);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-ink-secondary: var(--ink-secondary);
   --color-card: var(--card);
   --color-border: var(--border);
   --color-accent: var(--accent);
+  --color-signal: var(--signal);
+  --color-signal-hover: var(--signal-hover);
+  --color-proof: var(--proof);
+  --color-proof-wash: var(--proof-wash);
+  --color-caution: var(--caution);
+  --color-caution-wash: var(--caution-wash);
+  --color-failure: var(--failure);
+  --color-failure-wash: var(--failure-wash);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --shadow-card: var(--shadow-card);
+  --shadow-raised: var(--shadow-raised);
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0b;
-    --foreground: #f4f4f5;
-    --card: #131316;
-    --border: #26262b;
-    --accent: #3b82f6;
+    --paper: #111214;
+    --ink: #f2f0e9;
+    --card: #191a1d;
+    --border: #2c2d31;
+    --ink-secondary: #9aa0a6; /* re-checked at ~4.5:1 on --paper/--card in dark mode */
+    --signal: #5b82ff;
+    --signal-hover: #7a99ff;
+    --proof: #34c98f;
+    --proof-wash: #34c98f22;
+    --caution: #e0a233;
+    --caution-wash: #e0a23322;
+    --failure: #f0685e;
+    --failure-wash: #f0685e22;
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.24), 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-raised: 0 2px 4px rgba(0, 0, 0, 0.28), 0 4px 10px rgba(0, 0, 0, 0.36);
   }
+}
+
+* {
+  border-color: var(--border);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* Visible keyboard focus everywhere, respecting the OS reduced-motion
+   preference for anything that would otherwise transition/animate. */
+:focus-visible {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

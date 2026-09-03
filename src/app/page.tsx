@@ -16,7 +16,7 @@ export default function Home() {
         </p>
       </div>
 
-      <h2 className="mt-12 text-sm font-medium uppercase tracking-wide text-foreground/50">
+      <h2 className="mt-12 text-sm font-medium uppercase tracking-wide text-ink-secondary">
         Pick what you&apos;re buying
       </h2>
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -24,29 +24,29 @@ export default function Home() {
           const cfg = CATEGORY_CONFIG[cat];
           const tile = (
             <div
-              className={`group h-full rounded-xl border border-border bg-card p-6 transition ${
-                cfg.available ? "hover:border-accent hover:shadow-sm" : "opacity-60"
+              className={`group h-full rounded-[var(--radius-lg)] border border-border bg-card p-6 shadow-card transition ${
+                cfg.available ? "hover:border-signal hover:shadow-raised" : "opacity-60"
               }`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-signal/10 text-signal">
                     <CategoryIcon category={cat} className="h-5 w-5" />
                   </span>
                   <h3 className="font-semibold">{cfg.label}</h3>
                 </div>
                 {!cfg.available && (
-                  <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-foreground/50">
+                  <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-[11px] font-medium text-ink-secondary">
                     Coming soon
                   </span>
                 )}
               </div>
-              <p className="mt-3 text-sm text-foreground/60">{cfg.shortPitch}</p>
+              <p className="mt-3 text-sm text-ink-secondary">{cfg.shortPitch}</p>
               {cfg.available && (
                 <div className="mt-4 flex items-center justify-between">
-                  <p className="text-sm font-medium text-accent group-hover:underline">Start a test →</p>
+                  <p className="text-sm font-medium text-signal group-hover:underline">Start a test →</p>
                   {cfg.capabilityLabel !== "CONFIRMED" && (
-                    <span className="text-[11px] font-medium uppercase tracking-wide text-foreground/40">
+                    <span className="text-[11px] font-medium uppercase tracking-wide text-ink-secondary">
                       {cfg.capabilityLabel}
                     </span>
                   )}
@@ -64,7 +64,7 @@ export default function Home() {
         })}
       </div>
 
-      <div className="mt-16 rounded-xl border border-border bg-card p-6 text-sm text-foreground/70">
+      <div className="mt-16 rounded-[var(--radius-lg)] border border-border bg-card p-6 text-sm text-foreground/70 shadow-card">
         <p className="font-medium text-foreground">Bought locally instead of shipped?</p>
         <p className="mt-1">
           For a meetup purchase you can inspect the device yourself — TestPass is built first for

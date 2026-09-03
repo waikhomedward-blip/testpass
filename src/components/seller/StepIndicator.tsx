@@ -17,12 +17,12 @@ export default function StepIndicator({
           <div
             key={i}
             className={`h-1 flex-1 rounded-full transition-colors ${
-              i <= current ? "bg-accent" : "bg-border"
+              i <= current ? "bg-signal" : "bg-border"
             }`}
           />
         ))}
       </div>
-      <p className="mt-2 text-xs font-medium text-foreground/50">
+      <p className="mt-2 text-xs font-medium text-ink-secondary">
         Step {current + 1} of {steps.length} · {steps[current]}
       </p>
     </div>

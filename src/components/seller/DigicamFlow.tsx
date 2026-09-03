@@ -101,20 +101,20 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
     return (
       <div className="space-y-4">
         <StepIndicator steps={STEPS} current={0} />
-        <div className="rounded-xl border border-border bg-card p-6 text-center">
-          <p className="text-xs font-medium uppercase tracking-wide text-foreground/50">Your one-time code</p>
-          <p className="mt-2 font-mono text-3xl font-bold tracking-widest">{code}</p>
-          <p className="mt-2 text-xs text-foreground/50">Keep this visible — you&apos;ll photograph it twice.</p>
+        <div className="rounded-[var(--radius-lg)] border border-signal/25 bg-signal/[0.04] p-6 text-center">
+          <p className="text-xs font-medium uppercase tracking-wide text-ink-secondary">Your one-time code</p>
+          <p className="mt-2 font-mono text-3xl font-bold tracking-widest text-foreground">{code}</p>
+          <p className="mt-2 text-xs text-ink-secondary">Keep this visible — you&apos;ll photograph it twice.</p>
         </div>
         <ol className="list-decimal space-y-2 pl-5 text-sm">
           {config.sellerInstructions.slice(1).map((step, i) => (
             <li key={i}>{step}</li>
           ))}
         </ol>
-        <p className="text-xs text-foreground/50">TestPass will collect: {config.dataCollected.join("; ")}.</p>
+        <p className="text-xs text-ink-secondary">TestPass will collect: {config.dataCollected.join("; ")}.</p>
         <button
           onClick={goToUpload}
-          className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90"
+          className="w-full rounded-lg bg-signal py-2.5 text-sm font-medium text-white transition-colors hover:bg-signal-hover"
         >
           I&apos;ve taken both photos — upload them
         </button>
@@ -149,7 +149,7 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
       <div className="space-y-4">
         <StepIndicator steps={STEPS} current={phase === "review" ? 3 : 4} />
         <div>
-          <p className="mb-2 text-xs font-medium text-foreground/50">Wide &amp; zoom test shots</p>
+          <p className="mb-2 text-xs font-medium text-ink-secondary">Wide &amp; zoom test shots</p>
           <div className="grid grid-cols-2 gap-2">
             {wide && (
               // eslint-disable-next-line @next/next/no-img-element
@@ -163,7 +163,7 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
         </div>
         {productPhoto && (
           <div>
-            <p className="mb-2 text-xs font-medium text-foreground/50">Photo of the device</p>
+            <p className="mb-2 text-xs font-medium text-ink-secondary">Photo of the device</p>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={`data:image/jpeg;base64,${productPhoto}`} alt="Camera" className="aspect-video w-full rounded-lg object-cover" />
           </div>
@@ -176,18 +176,18 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
             <button
               onClick={submit}
               disabled={!bothPicked}
-              className="flex-1 rounded-lg bg-accent py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40"
+              className="flex-1 rounded-lg bg-signal py-2 text-sm font-medium text-white transition-colors hover:bg-signal-hover disabled:opacity-40"
             >
               Submit
             </button>
           </div>
         )}
 
-        {phase === "submitting" && <p className="text-center text-sm text-foreground/60">Submitting…</p>}
+        {phase === "submitting" && <p className="text-center text-sm text-ink-secondary">Submitting…</p>}
 
         {phase === "submit-error" && (
           <div className="space-y-2 text-sm">
-            <p className="text-red-500">{errorMsg}</p>
+            <p className="text-failure">{errorMsg}</p>
             <button onClick={submit} className="rounded-lg border border-border px-4 py-2 text-sm font-medium">
               Retry submit
             </button>
@@ -202,8 +202,8 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
     <div className="space-y-4">
       <StepIndicator steps={STEPS} current={1} />
 
-      <div className="rounded-lg border border-dashed border-border px-3 py-2 text-center text-xs text-foreground/50">
-        Code for this session: <span className="font-mono font-semibold text-foreground/70">{code}</span>
+      <div className="rounded-lg border border-dashed border-border px-3 py-2 text-center text-xs text-ink-secondary">
+        Code for this session: <span className="font-mono font-semibold text-foreground">{code}</span>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -223,12 +223,12 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
         />
       </div>
 
-      {readError && <p className="text-sm text-red-500">{readError}</p>}
+      {readError && <p className="text-sm text-failure">{readError}</p>}
 
       <button
         onClick={() => setPhase("product-photo")}
         disabled={!bothPicked}
-        className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40"
+        className="w-full rounded-lg bg-signal py-2.5 text-sm font-medium text-white transition-colors hover:bg-signal-hover disabled:opacity-40"
       >
         Continue
       </button>
@@ -259,8 +259,8 @@ function PhotoSlot({
         onChange={(e) => onChange(e.target.files?.[0])}
       />
       <div
-        className={`flex aspect-square flex-col items-center justify-center overflow-hidden rounded-xl border ${
-          shot ? "border-accent" : "border-dashed border-border"
+        className={`flex aspect-square flex-col items-center justify-center overflow-hidden rounded-[var(--radius-lg)] border ${
+          shot ? "border-signal shadow-card" : "border-dashed border-border"
         } bg-card text-center`}
       >
         {shot ? (
@@ -269,8 +269,8 @@ function PhotoSlot({
         ) : (
           <div className="px-3">
             <p className="text-sm font-medium">{label}</p>
-            <p className="mt-1 text-xs text-foreground/50">{hint}</p>
-            <p className="mt-2 text-xs font-medium text-accent">Tap to choose photo</p>
+            <p className="mt-1 text-xs text-ink-secondary">{hint}</p>
+            <p className="mt-2 text-xs font-medium text-signal">Tap to choose photo</p>
           </div>
         )}
       </div>

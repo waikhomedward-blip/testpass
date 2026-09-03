@@ -78,10 +78,16 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
         ? `${window.location.origin}/seller/${created.id}`
         : `/seller/${created.id}`;
     return (
-      <div className="rounded-xl border border-border bg-card p-6">
-        <p className="text-sm font-medium text-accent">Test session created</p>
+      <div className="rounded-[var(--radius-lg)] border border-border bg-card p-6 shadow-card">
+        <p className="flex items-center gap-1.5 text-sm font-medium text-proof">
+          <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 shrink-0" aria-hidden="true">
+            <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M6 10.5l2.5 2.5L14 7.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Test session created
+        </p>
         <h2 className="mt-1 text-lg font-semibold">Send this link to the seller</h2>
-        <p className="mt-1 text-sm text-foreground/60">
+        <p className="mt-1 text-sm text-ink-secondary">
           They can open it on any phone — no account, no install. It takes about{" "}
           {Math.round(config.estimatedSeconds / 30) * 30 || 90} seconds.
         </p>
@@ -89,14 +95,14 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
           <input
             readOnly
             value={sellerUrl}
-            className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm"
+            className="flex-1 rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs sm:text-sm"
             onFocus={(e) => e.currentTarget.select()}
           />
           <button
             type="button"
             onClick={() => copySellerUrl(sellerUrl)}
             className={`flex w-[92px] shrink-0 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-              copied ? "bg-green-600 text-white" : "bg-accent text-white hover:opacity-90"
+              copied ? "bg-proof text-white" : "bg-signal text-white transition-colors hover:bg-signal-hover"
             }`}
           >
             {copied ? (
@@ -117,23 +123,23 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
             )}
           </button>
         </div>
-        <p className="mt-1.5 text-xs text-foreground/40" role="status" aria-live="polite">
+        <p className="mt-1.5 text-xs text-ink-secondary" role="status" aria-live="polite">
           {copied ? "Link copied to clipboard." : ""}
         </p>
 
         <div className="mt-6 border-t border-border pt-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-foreground/50">Test status</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-ink-secondary">Test status</p>
           <SessionStatus sessionId={created.id} />
         </div>
 
-        <p className="mt-4 text-xs text-foreground/40">
+        <p className="mt-4 text-xs text-ink-secondary">
           Bookmark this page, or keep{" "}
-          <a href={`/buyer/session/${created.id}`} className="text-accent hover:underline">
+          <a href={`/buyer/session/${created.id}`} className="text-signal hover:underline">
             this direct link
           </a>{" "}
           if you want to come back later on another device. Testing more than one device? Every test
           you create in this browser is also listed on{" "}
-          <a href="/buyer/mine" className="text-accent hover:underline">
+          <a href="/buyer/mine" className="text-signal hover:underline">
             My tests
           </a>
           .
@@ -143,9 +149,9 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="rounded-xl border border-border bg-card p-6">
+    <form onSubmit={onSubmit} className="rounded-[var(--radius-lg)] border border-border bg-card p-6 shadow-card">
       <label className="block text-sm font-medium">
-        Listing link <span className="font-normal text-foreground/50">(optional)</span>
+        Listing link <span className="font-normal text-ink-secondary">(optional)</span>
         <input
           type="url"
           value={listingUrl}
@@ -156,7 +162,7 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
       </label>
 
       <label className="mt-4 block text-sm font-medium">
-        Model / details <span className="font-normal text-foreground/50">(optional)</span>
+        Model / details <span className="font-normal text-ink-secondary">(optional)</span>
         <input
           type="text"
           value={model}
@@ -167,7 +173,7 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
       </label>
 
       <label className="mt-4 block text-sm font-medium">
-        What are you worried about? <span className="font-normal text-foreground/50">(optional)</span>
+        What are you worried about? <span className="font-normal text-ink-secondary">(optional)</span>
         <textarea
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
@@ -177,12 +183,12 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
         />
       </label>
 
-      {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
+      {error && <p className="mt-3 text-sm text-failure">{error}</p>}
 
       <button
         type="submit"
         disabled={loading}
-        className="mt-5 w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+        className="mt-5 w-full rounded-lg bg-signal py-2.5 text-sm font-medium text-white transition-colors hover:bg-signal-hover disabled:opacity-50"
       >
         {loading ? "Creating…" : "Create test session"}
       </button>

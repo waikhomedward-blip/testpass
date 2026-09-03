@@ -38,7 +38,7 @@ export default function ProductPhotoStage({
         </p>
         <button
           onClick={start}
-          className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90"
+          className="w-full rounded-lg bg-signal py-2.5 text-sm font-medium text-white transition-colors hover:bg-signal-hover"
         >
           Turn on camera
         </button>
@@ -54,7 +54,10 @@ export default function ProductPhotoStage({
   if (state === "error") {
     return (
       <div className="space-y-3 text-sm">
-        <p>TestPass couldn&apos;t access your camera. Check your browser&apos;s camera permission for this site and try again.</p>
+        <p className="text-failure">
+          TestPass couldn&apos;t access your camera. Check your browser&apos;s camera permission for this
+          site and try again.
+        </p>
         <button onClick={start} className="rounded-lg border border-border px-4 py-2 text-sm font-medium">
           Try again
         </button>
@@ -75,7 +78,7 @@ export default function ProductPhotoStage({
       <button
         onClick={handleCapture}
         disabled={!videoReady}
-        className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40"
+        className="w-full rounded-lg bg-signal py-2.5 text-sm font-medium text-white transition-colors hover:bg-signal-hover disabled:opacity-40"
       >
         Capture photo
       </button>
