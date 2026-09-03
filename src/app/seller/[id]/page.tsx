@@ -1,7 +1,13 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { getSession, markSessionStarted, recordEvent } from "@/lib/db";
+
+// Per-transaction page, never a page anyone should land on from search —
+// see robots.ts for the matching crawl-level disallow.
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 import { CATEGORY_CONFIG } from "@/lib/primitives";
 import { isExpired } from "@/lib/time";
+import ReportProblem from "@/components/ReportProblem";
 import SwitchFlow from "@/components/seller/SwitchFlow";
 import GoProFlow from "@/components/seller/GoProFlow";
 import DJIFlow from "@/components/seller/DJIFlow";
@@ -77,7 +83,16 @@ export default async function SellerSessionPage(props: PageProps<"/seller/[id]">
       <p className="mt-2 text-sm text-ink-secondary">
         About {roundedSeconds} seconds on this phone. No account. No app to install. No passwords or
         personal info — TestPass only collects what this one test needs, and the buyer sees your
-        result the moment you submit.
+        result the moment you submit. This is free for you — TestPass never charges the seller,
+        only the buyer, and only after the result exists.
+      </p>
+      <p className="mt-2 text-xs text-ink-secondary">
+        By continuing, whatever you capture for this test (photos and any device status TestPass
+        reads) is sent to the buyer as your result. See{" "}
+        <a href="/privacy" className="underline decoration-dotted underline-offset-2 hover:text-signal">
+          how TestPass handles this
+        </a>
+        .
       </p>
 
       <div className="mt-6">
@@ -94,6 +109,10 @@ export default async function SellerSessionPage(props: PageProps<"/seller/[id]">
         {session.category === "printer3d" && <Printer3DFlow sessionId={id} />}
         {session.category === "projector" && <ProjectorFlow sessionId={id} />}
         {session.category === "rogally" && <ROGAllyFlow sessionId={id} />}
+      </div>
+
+      <div className="mt-6 text-right">
+        <ReportProblem sessionId={id} actor="seller" stage={session.status} page="seller_flow" />
       </div>
     </div>
   );

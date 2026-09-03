@@ -420,7 +420,7 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
   }
 
   if (phase === "done") {
-    return <SubmittedScreen verdict={verdict} />;
+    return <SubmittedScreen verdict={verdict} sessionId={sessionId} />;
   }
 
   if (phase === "capture" && currentStep) {

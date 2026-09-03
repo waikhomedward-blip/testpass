@@ -19,6 +19,14 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/sessions/[i
     // standing between a non-paying buyer and the result.
     const locked = PAYWALL_ENABLED && session.status === "COMPLETED" && !session.unlocked;
     if (locked) {
+      // Completes the monetization funnel (session_created → seller_opened
+      // → seller_started → seller_submitted → evaluation_result →
+      // paywall_viewed → checkout_started → payment_completed). Fired here,
+      // server-side, rather than client-side in SessionStatus.tsx, so it's
+      // guaranteed accurate and can't be skipped or double-fired by a client
+      // render quirk — this route is the one place that actually knows the
+      // buyer was just served the locked state. Deduped per session.
+      await recordEvent({ sessionId: id, eventType: "paywall_viewed", once: true });
       return NextResponse.json({ ...session, evidence: [] });
     }
 

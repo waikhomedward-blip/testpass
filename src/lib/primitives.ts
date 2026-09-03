@@ -675,6 +675,31 @@ Association strength should not exceed MODERATE — a burst of this ROG Ally's o
   },
 };
 
+// BETA CATEGORY KILL SWITCH — operational safety valve, not a code change.
+// A comma-separated list of category keys in DISABLED_CATEGORIES (set as a
+// Vercel env var, any environment) flips `available` to false for those
+// categories only, on top of whatever the table above already says.
+// Existing/in-flight sessions for a disabled category are untouched — this
+// only blocks *new* session creation (src/app/api/sessions/create/route.ts
+// already 400s on `!config.available`) and hides the homepage tile. Nothing
+// is deleted, no fake evidence is produced, and re-enabling is just editing
+// the env var back and redeploying. See docs/BETA_RUNBOOK.md for the exact
+// steps. Applied once at module load, same lifetime as CATEGORY_CONFIG
+// itself.
+(function applyCategoryKillSwitch() {
+  const raw = process.env.DISABLED_CATEGORIES;
+  if (!raw) return;
+  const disabled = new Set(
+    raw
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+  );
+  for (const key of Object.keys(CATEGORY_CONFIG) as Category[]) {
+    if (disabled.has(key)) CATEGORY_CONFIG[key].available = false;
+  }
+})();
+
 // PS5 stays intentionally hidden from the public homepage while owner validation runs.
 export const CATEGORY_ORDER: Category[] = [
   "switch",

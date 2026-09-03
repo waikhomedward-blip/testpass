@@ -742,7 +742,7 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
   }
 
   if (phase === "done") {
-    return <SubmittedScreen verdict={verdict} />;
+    return <SubmittedScreen verdict={verdict} sessionId={sessionId} />;
   }
 
   const stepIndex =

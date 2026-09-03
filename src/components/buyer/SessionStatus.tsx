@@ -5,6 +5,7 @@ import { suggestDecision } from "@/lib/decision";
 import { PAYWALL_ENABLED, RESULT_PRICE_DISPLAY } from "@/lib/stripe";
 import { CATEGORY_CONFIG } from "@/lib/primitives";
 import { SessionWithEvidence } from "@/lib/types";
+import ReportProblem from "@/components/ReportProblem";
 
 const STATUS_COPY: Record<string, string> = {
   NOT_STARTED: "Waiting for the seller to open the link.",
@@ -55,7 +56,14 @@ export default function SessionStatus({ sessionId }: { sessionId: string }) {
         if (cancelled) return;
         setSession(data);
         setLoadError(false);
-        if (data.status !== "COMPLETED") timeoutId = setTimeout(poll, POLL_MS);
+        // Keep polling past COMPLETED while the result is still locked —
+        // otherwise a buyer redirected back from a successful Stripe
+        // Checkout (which only happens once status is already COMPLETED)
+        // would land on a page that stopped checking in right as the
+        // webhook was about to flip `unlocked` to true, and see a stuck
+        // "locked" card until they manually refreshed.
+        const stillLocked = PAYWALL_ENABLED && data.status === "COMPLETED" && !data.unlocked;
+        if (data.status !== "COMPLETED" || stillLocked) timeoutId = setTimeout(poll, POLL_MS);
       } catch {
         if (cancelled) return;
         setLoadError(true);
@@ -103,6 +111,12 @@ export default function SessionStatus({ sessionId }: { sessionId: string }) {
           Checkout isn&apos;t available for this result right now. Try again in a moment.
         </div>
       )}
+      {checkoutParam === "technical_issue" && (
+        <div className="rounded-lg border border-dashed border-border px-4 py-3 text-sm text-ink-secondary">
+          TestPass ran into a technical problem scoring this test, so there&apos;s nothing to charge for
+          yet — nothing was billed. Try refreshing in a bit, or ask the seller to retry.
+        </div>
+      )}
 
       <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-3">
         <span className={`h-2 w-2 shrink-0 rounded-full ${isDone ? "bg-proof" : "bg-caution"}`} />
@@ -130,8 +144,90 @@ export default function SessionStatus({ sessionId }: { sessionId: string }) {
           {session.evidence.map((ev) => (
             <EvidenceReport key={ev.id} evidence={ev} completedAt={session.submitted_at} />
           ))}
+          <BuyerFeedback sessionId={sessionId} />
         </div>
       )}
+
+      <div className="pt-2 text-right">
+        <ReportProblem sessionId={sessionId} actor="buyer" stage={session.status} page="buyer_session" />
+      </div>
+    </div>
+  );
+}
+
+// Section 25's buyer micro-question — one tap, optional detail, never
+// mandatory. Fires once the unlocked result is actually visible, mirroring
+// where `buyer_viewed_result` already fires. Deliberately not the
+// Superhuman-style "how disappointed" question yet — that's for once there
+// are enough genuine/repeat users to mean something, not after a handful of
+// physical-QA participants (Section 26).
+function BuyerFeedback({ sessionId }: { sessionId: string }) {
+  const [rating, setRating] = useState<string | null>(null);
+  const [freeText, setFreeText] = useState("");
+  const [sent, setSent] = useState(false);
+
+  async function send(chosenRating: string, text?: string) {
+    setRating(chosenRating);
+    setSent(true);
+    try {
+      await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          actor: "buyer",
+          stage: "result_viewed",
+          rating: chosenRating,
+          freeText: text || undefined,
+          page: "buyer_session",
+        }),
+      });
+    } catch {
+      // Best-effort — the buyer already saw their result either way.
+    }
+  }
+
+  if (sent) {
+    return (
+      <p className="text-center text-xs text-ink-secondary">Thanks for the feedback.</p>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-dashed border-border px-4 py-3">
+      <p className="text-sm font-medium">Did TestPass help you decide?</p>
+      <div className="mt-2 flex gap-2">
+        {["Yes", "Somewhat", "No"].map((opt) => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => send(opt)}
+            className="rounded-lg border border-border-control px-3 py-1.5 text-xs font-medium text-ink-secondary transition-colors hover:border-signal hover:text-signal"
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+      <label className="mt-2 block text-xs text-ink-secondary">
+        What was missing? (optional)
+        <div className="mt-1 flex gap-2">
+          <input
+            type="text"
+            value={freeText}
+            onChange={(e) => setFreeText(e.target.value)}
+            className="w-full rounded-lg border border-border-control bg-background px-2.5 py-1.5 text-sm"
+            maxLength={500}
+          />
+          <button
+            type="button"
+            onClick={() => send(rating ?? "unrated", freeText)}
+            disabled={!freeText.trim()}
+            className="shrink-0 rounded-lg border border-border-control px-3 py-1.5 text-xs font-medium text-ink-secondary disabled:opacity-40"
+          >
+            Send
+          </button>
+        </div>
+      </label>
     </div>
   );
 }
@@ -162,12 +258,15 @@ function PaywallCard({ sessionId, session }: { sessionId: string; session: Sessi
           Unlock the result — verdict, what TestPass observed, and the evidence itself — for{" "}
           {RESULT_PRICE_DISPLAY}.
         </p>
+        <p className="mt-1 text-xs text-ink-secondary">
+          One-time payment. No subscription. The seller pays nothing.
+        </p>
         <form action={`/api/checkout/${sessionId}`} method="post" className="mt-3">
           <button
             type="submit"
             className="w-full rounded-lg bg-signal py-2.5 text-sm font-medium text-white transition-colors hover:bg-signal-hover"
           >
-            Unlock result
+            Unlock result — {RESULT_PRICE_DISPLAY}
           </button>
         </form>
       </div>

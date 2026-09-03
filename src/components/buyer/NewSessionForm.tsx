@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Category } from "@/lib/types";
 import { CategoryConfig } from "@/lib/primitives";
 import { addSessionToHistory } from "@/lib/session-history";
+import { PAYWALL_ENABLED, RESULT_PRICE_DISPLAY } from "@/lib/stripe";
 import SessionStatus from "./SessionStatus";
 
 export default function NewSessionForm({ config }: { config: CategoryConfig }) {
@@ -14,22 +15,25 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<{ id: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [messageCopied, setMessageCopied] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const messageCopyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {
       if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+      if (messageCopyTimeoutRef.current) clearTimeout(messageCopyTimeoutRef.current);
     };
   }, []);
 
-  async function copySellerUrl(url: string) {
+  async function copyText(text: string): Promise<boolean> {
     try {
       if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(url);
+        await navigator.clipboard.writeText(text);
       } else {
         // Fallback for browsers without the async Clipboard API.
         const el = document.createElement("textarea");
-        el.value = url;
+        el.value = text;
         el.style.position = "fixed";
         el.style.opacity = "0";
         document.body.appendChild(el);
@@ -38,11 +42,31 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
         document.execCommand("copy");
         document.body.removeChild(el);
       }
+      return true;
+    } catch {
+      // If copying silently fails, the text is still selected/visible for a manual copy.
+      return false;
+    }
+  }
+
+  async function copySellerUrl(url: string) {
+    if (await copyText(url)) {
       setCopied(true);
       if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
       copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // If copying silently fails, the text is still selected/visible for a manual copy.
+    }
+  }
+
+  // Section 6's buyer→seller distribution loop: a pre-written message the
+  // buyer can send as-is, so the trust-preserving framing (buyer requested
+  // it, seller pays nothing, no account/passwords) travels with the link
+  // instead of depending on the buyer to explain TestPass themselves.
+  async function copySellerMessage(url: string) {
+    const message = `Hey — before I buy, could you run a quick free test on it? It's called TestPass: you open this link on your phone, no account or app needed, takes about a minute or two, and it's free for you either way. ${url}`;
+    if (await copyText(message)) {
+      setMessageCopied(true);
+      if (messageCopyTimeoutRef.current) clearTimeout(messageCopyTimeoutRef.current);
+      messageCopyTimeoutRef.current = setTimeout(() => setMessageCopied(false), 2000);
     }
   }
 
@@ -127,6 +151,14 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
           {copied ? "Link copied to clipboard." : ""}
         </p>
 
+        <button
+          type="button"
+          onClick={() => copySellerMessage(sellerUrl)}
+          className="mt-2 text-xs font-medium text-signal hover:underline"
+        >
+          {messageCopied ? "Message copied — paste it to the seller" : "Copy a ready-to-send message instead"}
+        </button>
+
         <div className="mt-6 border-t border-border pt-4">
           <p className="type-label">Test status</p>
           <SessionStatus sessionId={created.id} />
@@ -193,10 +225,19 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
 
       {error && <p className="mt-3 text-sm text-failure">{error}</p>}
 
+      {/* Price disclosed before the session is even created — Section 9 of
+          the beta operating directive: never a surprise sprung after the
+          seller has already completed the test. */}
+      <p className="mt-4 text-xs text-ink-secondary">
+        {PAYWALL_ENABLED
+          ? `Creating the test is free. It's ${RESULT_PRICE_DISPLAY}, one time, only if you unlock the finished result — and only after the seller completes it. The seller never pays anything.`
+          : "Free while TestPass is being built out. The seller never pays anything."}
+      </p>
+
       <button
         type="submit"
         disabled={loading}
-        className="mt-5 w-full rounded-lg bg-signal py-2.5 text-sm font-medium text-white transition-colors hover:bg-signal-hover disabled:opacity-50"
+        className="mt-3 w-full rounded-lg bg-signal py-2.5 text-sm font-medium text-white transition-colors hover:bg-signal-hover disabled:opacity-50"
       >
         {loading ? "Creating…" : "Create test session"}
       </button>

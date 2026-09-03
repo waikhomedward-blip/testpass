@@ -1,7 +1,12 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { getSession } from "@/lib/db";
 import { CATEGORY_CONFIG } from "@/lib/primitives";
 import SessionStatus from "@/components/buyer/SessionStatus";
+
+// Per-transaction page, never a page anyone should land on from search —
+// see robots.ts for the matching crawl-level disallow.
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 // A thin, bookmarkable/shareable wrapper around the same live SessionStatus
 // component NewSessionForm renders inline right after a buyer creates a

@@ -55,6 +55,11 @@ export interface TestSession {
   // "preview" | "development" | null (rows created before this column
   // existed). See supabase/add-environment-marker.sql for why this exists.
   environment: string | null;
+  // Server/admin-set only — see createSession in src/lib/db.ts and
+  // supabase/add-launch-operating-fields.sql. null/"genuine" = ordinary
+  // buyer; "physical_qa" = a compensated device-owning participant recruited
+  // for compatibility testing, excluded from willingness-to-pay reporting.
+  cohort: string | null;
 }
 
 // One row per funnel/error event — see supabase/add-beta-readiness.sql
@@ -97,6 +102,12 @@ export interface EvidenceRecord {
   cosmetic_note: string | null;
   created_at: string;
   images?: DisplayImage[];
+  // Billing-only, orthogonal to `verdict` — see
+  // supabase/add-launch-operating-fields.sql. true means TestPass's own
+  // evaluator infra failed to produce a real result (never that the
+  // seller's device failed); the checkout route uses this to refuse
+  // charging for a session that has no real result yet.
+  technical_error: boolean;
 }
 
 export interface SessionWithEvidence extends TestSession {

@@ -34,12 +34,23 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Physical-QA cohort tagging — server/admin-only, never a public field.
+  // A recruiter sends a QA participant a link with ?qa=<QA_COHORT_SECRET>
+  // (set in Vercel env vars, shared only with the partner running
+  // recruitment); anything else, including no param at all, is an ordinary
+  // genuine buyer. There is deliberately no coupon input or client-visible
+  // toggle for this — see Section 19 of the beta operating directive.
+  const qaParam = req.nextUrl.searchParams.get("qa");
+  const qaSecret = process.env.QA_COHORT_SECRET;
+  const cohort = qaSecret && qaParam === qaSecret ? "physical_qa" : null;
+
   try {
     const { id } = await createSession({
       category,
       model: body.model?.trim() || null,
       listingUrl: body.listingUrl?.trim() || null,
       listingNotes: body.listingNotes?.trim() || null,
+      cohort,
     });
     return NextResponse.json({ id });
   } catch (err) {
