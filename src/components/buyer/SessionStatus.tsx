@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { suggestDecision } from "@/lib/decision";
 import { PAYWALL_ENABLED, RESULT_PRICE_DISPLAY } from "@/lib/stripe";
+import { CATEGORY_CONFIG } from "@/lib/primitives";
 import { SessionWithEvidence } from "@/lib/types";
 
 const STATUS_COPY: Record<string, string> = {
@@ -116,20 +117,7 @@ export default function SessionStatus({ sessionId }: { sessionId: string }) {
         </p>
       )}
 
-      {isDone && locked && (
-        <div className="rounded-[var(--radius-lg)] border border-border bg-card p-6 shadow-card">
-          <p className="font-medium">Result ready</p>
-          <p className="mt-2 text-sm text-ink-secondary">Unlock this result for {RESULT_PRICE_DISPLAY}.</p>
-          <form action={`/api/checkout/${sessionId}`} method="post" className="mt-4">
-            <button
-              type="submit"
-              className="w-full rounded-lg bg-signal py-2.5 text-sm font-medium text-white transition-colors hover:bg-signal-hover"
-            >
-              Unlock result
-            </button>
-          </form>
-        </div>
-      )}
+      {isDone && locked && <PaywallCard sessionId={sessionId} session={session} />}
 
       {isDone && !locked && (
         <div className="space-y-6">
@@ -144,6 +132,45 @@ export default function SessionStatus({ sessionId }: { sessionId: string }) {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+// Wave 1.1: the paywall should read as the natural next step in the
+// evidence journey the buyer already started, not an ecommerce
+// interruption — this specific test, this specific unit, what TestPass
+// actually checked, phrased in the same reading order as the unlocked
+// result below (what was tested, then what unlocking reveals). No fake
+// urgency, no countdown, no security-badge imagery. It deliberately does
+// NOT show the verdict/evidence/reasoning — those stay server-side until
+// payment (src/app/api/sessions/[id]/route.ts strips `evidence` entirely
+// while locked, untouched here) — but category/model are ordinary session
+// fields the buyer already provided, not evidence, so naming them doesn't
+// weaken the paywall.
+function PaywallCard({ sessionId, session }: { sessionId: string; session: SessionWithEvidence }) {
+  const config = CATEGORY_CONFIG[session.category];
+  return (
+    <div className="rounded-[var(--radius-lg)] border border-border-subtle bg-card p-6 shadow-card">
+      <p className="text-[11px] font-medium uppercase tracking-wide text-ink-secondary">Your test is complete</p>
+      <p className="mt-1 text-base font-semibold">
+        {config.label}
+        {session.model ? ` — ${session.model}` : ""}
+      </p>
+      <p className="mt-1 text-sm text-ink-secondary">TestPass checked: {config.functionTested}.</p>
+      <div className="mt-4 border-t border-border-subtle pt-4">
+        <p className="text-sm text-ink-secondary">
+          Unlock the result — verdict, what TestPass observed, and the evidence itself — for{" "}
+          {RESULT_PRICE_DISPLAY}.
+        </p>
+        <form action={`/api/checkout/${sessionId}`} method="post" className="mt-3">
+          <button
+            type="submit"
+            className="w-full rounded-lg bg-signal py-2.5 text-sm font-medium text-white transition-colors hover:bg-signal-hover"
+          >
+            Unlock result
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
