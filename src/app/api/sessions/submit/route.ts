@@ -94,6 +94,23 @@ export async function POST(req: NextRequest) {
     technicalError = true;
   }
 
+  // Capture-freshness metadata, stamped here rather than trusted from the
+  // client — this is what a "live capture" is actually bound to. It isn't a
+  // cryptographic nonce (no capture_nonce column exists yet; that would be
+  // the next step if replay resistance beyond session-binding is needed),
+  // but it is genuinely server-authored and honest about what it proves:
+  // this submission was received against this specific, not-yet-completed
+  // session, at this server-observed time. Combined with the COMPLETED-
+  // status check above (which already blocks resubmission/replay against a
+  // finished session), that's the real basis for calling any single-capture
+  // or countdown-burst shot "session-bound" in evaluator/category copy —
+  // not a code visibly held in the photo. See runner-types.ts for the
+  // fuller doctrine note.
+  const rawDataWithReceipt = {
+    ...(body.rawData ?? {}),
+    serverReceivedAt: new Date().toISOString(),
+  };
+
   try {
     await recordEvidenceAndComplete({
       sessionId: session.id,
@@ -103,7 +120,7 @@ export async function POST(req: NextRequest) {
       verdict: evaluation.verdict,
       reasoning: evaluation.reasoning,
       associationStrength: evaluation.associationStrength,
-      rawData: body.rawData ?? null,
+      rawData: rawDataWithReceipt,
       imagePaths,
       cosmeticNote: evaluation.cosmeticNote,
       technicalError,

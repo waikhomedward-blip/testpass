@@ -3,6 +3,17 @@
 import { RunnerConfig } from "@/lib/runner-types";
 import GuidedCaptureRunner from "./GuidedCaptureRunner";
 
+// Round 2 (physical-feasibility + error-recovery audit): both steps are
+// already Evidence Surface A (TestPass's own live camera pointed at the
+// console's normal on-screen display) — no same-phone-screenshot ambiguity
+// here, and both single-capture steps automatically inherited the shared
+// runner's per-shot Retake/Use confirm. The one real defect found and
+// fixed here was in primitives.ts, not this file: includeProductPhoto is
+// true, but this category's evaluationPromptSystem never appended
+// PRODUCT_PHOTO_ADDENDUM — the evaluator model was silently handed a third
+// image (the live console photo below) with no instruction about what it
+// was or that it must not affect the verdict. Quest had the identical
+// bug; both are fixed now.
 const runnerConfig: RunnerConfig = {
   category: "xbox",
   filenamePrefix: "xbox",

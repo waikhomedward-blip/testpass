@@ -19,11 +19,11 @@ type Row = SessionHistoryEntry & {
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  NOT_STARTED: "bg-foreground/10 text-foreground/60",
-  IN_PROGRESS: "bg-amber-500/10 text-amber-600",
-  ABANDONED: "bg-foreground/10 text-foreground/60",
-  INCOMPLETE: "bg-amber-500/10 text-amber-600",
-  COMPLETED: "bg-green-500/10 text-green-600",
+  NOT_STARTED: "border-border-control text-ink-secondary",
+  IN_PROGRESS: "border-caution/40 text-caution",
+  ABANDONED: "border-border-control text-ink-secondary",
+  INCOMPLETE: "border-caution/40 text-caution",
+  COMPLETED: "border-proof/40 text-proof",
 };
 
 export default function MyTestsPage() {
@@ -88,18 +88,18 @@ export default function MyTestsPage() {
 
   return (
     <div className="mx-auto w-full max-w-2xl flex-1 px-6 py-10">
-      <h1 className="text-2xl font-semibold">My tests</h1>
-      <p className="mt-2 text-sm text-foreground/60">
+      <h1 className="type-page-title">My tests</h1>
+      <p className="mt-2 text-sm text-ink-secondary">
         Every test you&apos;ve created in this browser, in one place. This list lives only on this
         device — it isn&apos;t an account, so it won&apos;t follow you to another phone or browser.
       </p>
 
-      {rows === null && <p className="mt-8 text-sm text-foreground/50">Loading…</p>}
+      {rows === null && <p className="mt-8 text-sm text-ink-secondary">Loading…</p>}
 
       {rows !== null && rows.length === 0 && (
-        <div className="mt-8 rounded-xl border border-dashed border-border p-6 text-center text-sm text-foreground/60">
+        <div className="mt-8 rounded-xl border border-dashed border-border-control p-6 text-center text-sm text-ink-secondary">
           You haven&apos;t created any tests yet.{" "}
-          <Link href="/" className="text-accent hover:underline">
+          <Link href="/" className="text-signal hover:underline">
             Test a device
           </Link>{" "}
           to get started.
@@ -113,11 +113,11 @@ export default function MyTestsPage() {
             const label = config?.label ?? row.category;
             const created = new Date(row.createdAt);
             return (
-              <li key={row.id} className="rounded-xl border border-border bg-card p-4">
+              <li key={row.id} className="rounded-xl border border-border-subtle bg-card p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-medium">{label}</p>
-                    <p className="mt-0.5 text-xs text-foreground/50">
+                    <p className="mt-0.5 text-xs text-ink-secondary">
                       Created{" "}
                       {created.toLocaleDateString(undefined, {
                         month: "short",
@@ -127,32 +127,40 @@ export default function MyTestsPage() {
                       })}
                     </p>
                   </div>
-                  {row.loading && <span className="text-xs text-foreground/40">Loading…</span>}
+                  {row.loading && <span className="text-xs text-ink-secondary">Loading…</span>}
                   {!row.loading && row.notFound && (
-                    <span className="rounded-full bg-foreground/10 px-2.5 py-0.5 text-xs font-medium text-foreground/50">
+                    <span className="shrink-0 rounded-full border border-border-control px-2.5 py-0.5 text-xs font-medium text-ink-secondary">
                       Expired / not found
                     </span>
                   )}
                   {!row.loading && row.session && (
                     <span
-                      className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                        STATUS_STYLES[row.session.status] ?? "bg-foreground/10 text-foreground/60"
+                      className={`shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+                        STATUS_STYLES[row.session.status] ?? "border-border-control text-ink-secondary"
                       }`}
                     >
                       {row.session.status.replace("_", " ")}
                     </span>
                   )}
                 </div>
-                <div className="mt-3 flex items-center gap-4 text-sm">
+                {/* WCAG 2.5.8: plain inline text links here would have a
+                    tap target under the 24px minimum (text-sm's line-height
+                    alone is 20px, with no padding). -my-2 py-2 keeps the
+                    text's baseline position unchanged while giving each
+                    link a full 24px+ tall hit area. */}
+                <div className="-my-2 mt-1 flex items-center gap-4 text-sm">
                   {!row.notFound && (
-                    <Link href={`/buyer/session/${row.id}`} className="font-medium text-accent hover:underline">
+                    <Link
+                      href={`/buyer/session/${row.id}`}
+                      className="py-2 font-medium text-signal hover:underline"
+                    >
                       View status
                     </Link>
                   )}
                   <button
                     type="button"
                     onClick={() => forget(row.id)}
-                    className="text-foreground/40 hover:text-foreground/70"
+                    className="py-2 text-ink-secondary hover:text-foreground"
                   >
                     Remove from this list
                   </button>

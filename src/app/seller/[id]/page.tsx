@@ -60,15 +60,24 @@ export default async function SellerSessionPage(props: PageProps<"/seller/[id]">
   // actually tap into the guided capture, not just load this page.
   await recordEvent({ sessionId: id, eventType: "seller_opened", once: true });
 
+  const roundedSeconds = Math.round(config.estimatedSeconds / 30) * 30;
+
   return (
     <div className="mx-auto w-full max-w-lg flex-1 px-6 py-10">
-      <p className="text-xs font-medium uppercase tracking-wide text-foreground/50">
+      {/* Fukasawa's "Without Thought": a seller who's never heard of
+          TestPass should answer, at a glance and before reading anything
+          else, what/who/how-long/privacy/what-happens-next — then the
+          interface should get out of the way so they can just point their
+          phone at the device. This block is the whole answer; everything
+          below it is the task itself, not more explaining. */}
+      <p className="type-label font-mono">
         TestPass · {config.label}
       </p>
-      <h1 className="mt-1 text-2xl font-semibold">Quick device test</h1>
-      <p className="mt-2 text-sm text-foreground/60">
-        No account, nothing to install. This takes about {Math.round(config.estimatedSeconds / 30) * 30}{" "}
-        seconds. TestPass only collects what&apos;s needed for this test.
+      <h1 className="mt-1 type-page-title">A buyer wants proof this works before they pay</h1>
+      <p className="mt-2 text-sm text-ink-secondary">
+        About {roundedSeconds} seconds on this phone. No account. No app to install. No passwords or
+        personal info — TestPass only collects what this one test needs, and the buyer sees your
+        result the moment you submit.
       </p>
 
       <div className="mt-6">
@@ -94,7 +103,7 @@ function Shell({ title, children }: { title: string; children: React.ReactNode }
   return (
     <div className="mx-auto w-full max-w-lg flex-1 px-6 py-16 text-center">
       <h1 className="text-xl font-semibold">{title}</h1>
-      <div className="mt-3 text-foreground/60">{children}</div>
+      <div className="mt-3 text-sm text-ink-secondary">{children}</div>
     </div>
   );
 }
