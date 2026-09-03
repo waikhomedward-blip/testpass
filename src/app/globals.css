@@ -19,6 +19,13 @@
  * ------------------------------------------------------------------- */
 
 :root {
+  /* Wave 1.1: private beta is deliberately light-only (see the note further
+     down where the old dark-mode @media block used to live) — this stops a
+     dark-OS browser from rendering native form-control chrome (date
+     pickers, selects, scrollbars) in its own dark theme while every
+     custom-styled element on the page stays light. */
+  color-scheme: light;
+
   /* Surfaces */
   --paper: #f6f3eb;
   --ink: #111315;
@@ -32,7 +39,7 @@
      (checked: ~3.3:1 and ~3.7:1 respectively). --border stays as an
      alias to --border-subtle so nothing untouched breaks. */
   --border-subtle: #e4ddc9;
-  --border-control: #8f8567;
+  --border-control: #737982; /* Wave 1.1: cooler neutral, not the original warm/brown #8f8567 — a beige-leaning control border pulled the whole system toward "archival" rather than "precise instrument." Verified ~3.96:1 on --paper, ~4.39:1 on --card (both clear WCAG 1.4.11's 3:1 non-text minimum with real headroom). */
   --border: var(--border-subtle);
 
   /* Text */
@@ -96,27 +103,19 @@
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --paper: #111214;
-    --ink: #f2f0e9;
-    --card: #191a1d;
-    --border-subtle: #2c2d31;
-    --border-control: #666a6f; /* re-checked >=3:1 against both --paper and --card in dark mode */
-    --border: var(--border-subtle);
-    --ink-secondary: #9aa0a6; /* re-checked at ~7:1 on --paper in dark mode — already had headroom */
-    --signal: #5b82ff;
-    --signal-hover: #7a99ff;
-    --proof: #34c98f;
-    --proof-wash: #34c98f22;
-    --caution: #e0a233;
-    --caution-wash: #e0a23322;
-    --failure: #f0685e;
-    --failure-wash: #f0685e22;
-    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.24), 0 1px 3px rgba(0, 0, 0, 0.3);
-    --shadow-raised: 0 2px 4px rgba(0, 0, 0, 0.28), 0 4px 10px rgba(0, 0, 0, 0.36);
-  }
-}
+/* Wave 1.1: private beta is deliberately light-only. An earlier checkpoint
+ * had a contrast-verified but never art-directed dark-mode block here —
+ * "functional but undesigned" is exactly the ambiguous halfway state we
+ * decided against: a beta tester whose OS is set to dark would silently get
+ * a TestPass identity nobody actually designed. One finished experience
+ * beats two inconsistent ones. No @media (prefers-color-scheme: dark)
+ * override and no theme toggle ship in this wave — the whole app renders
+ * the light palette above regardless of OS preference. Dark mode can
+ * return as its own deliberate design pass later if the product warrants
+ * it; the values above (paper/ink/border/status colors) are the ones to
+ * revisit first if it does, since they were already contrast-checked once
+ * and just need re-verifying against whatever the identity system looks
+ * like by then. */
 
 * {
   border-color: var(--border);
@@ -142,4 +141,65 @@ body {
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ---------------------------------------------------------------------
+ * TestPass Visual System — Wave 1.1 signature grammar.
+ *
+ * The recognizable, repeatable TestPass moves — small in number and each
+ * one meaningful, not decorative:
+ *   - .evidence-frame  registration corners, reserved for captured
+ *     physical evidence (photos, capture frames) and nothing else. Do not
+ *     apply to challenge-code cards, ordinary cards, or headings — the
+ *     mark means "this came from the physical device," and using it
+ *     anywhere else dilutes that into generic tech decoration.
+ *   - indexed step numerals (.step-num-lg / .step-num-sm below) — real
+ *     sequence information, not ornament, so they're allowed to repeat
+ *     across 13+ device categories the way corner marks are not.
+ *   - restrained signal-blue rules used structurally (a short rule under
+ *     a heading, a numeral color) rather than blue backgrounds/fills.
+ * ------------------------------------------------------------------- */
+
+.evidence-frame {
+  position: relative;
+}
+.evidence-frame::before,
+.evidence-frame::after {
+  content: "";
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid var(--ink);
+  pointer-events: none;
+}
+.evidence-frame::before {
+  top: 7px;
+  left: 7px;
+  border-width: 1.5px 0 0 1.5px;
+}
+.evidence-frame::after {
+  bottom: 7px;
+  right: 7px;
+  border-width: 0 1.5px 1.5px 0;
+}
+
+/* Large numeral: orients a seller to a brand-new major step. Used once or
+   twice per screen at most, never as a running list. */
+.step-num-lg {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  color: var(--signal);
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+/* Compact numeral: contextual progress ("02 / 04"), monospaced so it reads
+   as machine-generated metadata rather than a heading. */
+.step-num-sm {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  letter-spacing: 0.02em;
 }
