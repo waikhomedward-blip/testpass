@@ -31,7 +31,14 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/checkout/[i
   try {
     const { url } = await createCheckoutSession(id, req.nextUrl.origin);
     await recordEvent({ sessionId: id, eventType: "checkout_started", once: true });
-    return NextResponse.redirect(url);
+    // Explicit 303: this route is hit by a plain HTML POST form
+    // (SessionStatus.tsx), and NextResponse.redirect()'s default 307
+    // preserves the original method on redirect — so browsers were
+    // re-issuing the redirect as a POST to Stripe's hosted checkout page,
+    // which only serves GET and rejects the POST at its CDN. 303 forces
+    // the follow-up request to GET regardless of how this route was
+    // reached, which is what a "redirect after a form POST" should do.
+    return NextResponse.redirect(url, 303);
   } catch (err) {
     console.error("createCheckoutSession failed:", err);
     return NextResponse.redirect(new URL(`/buyer/session/${id}?checkout=unavailable`, req.url));
