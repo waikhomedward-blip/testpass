@@ -88,7 +88,7 @@ export default function MyTestsPage() {
 
   return (
     <div className="mx-auto w-full max-w-2xl flex-1 px-6 py-10">
-      <h1 className="text-2xl font-semibold">My tests</h1>
+      <h1 className="type-page-title">My tests</h1>
       <p className="mt-2 text-sm text-ink-secondary">
         Every test you&apos;ve created in this browser, in one place. This list lives only on this
         device — it isn&apos;t an account, so it won&apos;t follow you to another phone or browser.

@@ -70,10 +70,10 @@ export default async function SellerSessionPage(props: PageProps<"/seller/[id]">
           interface should get out of the way so they can just point their
           phone at the device. This block is the whole answer; everything
           below it is the task itself, not more explaining. */}
-      <p className="font-mono text-xs font-medium uppercase tracking-wide text-ink-secondary">
+      <p className="type-label font-mono">
         TestPass · {config.label}
       </p>
-      <h1 className="mt-1 text-2xl font-semibold">A buyer wants proof this works before they pay</h1>
+      <h1 className="mt-1 type-page-title">A buyer wants proof this works before they pay</h1>
       <p className="mt-2 text-sm text-ink-secondary">
         About {roundedSeconds} seconds on this phone. No account. No app to install. No passwords or
         personal info — TestPass only collects what this one test needs, and the buyer sees your

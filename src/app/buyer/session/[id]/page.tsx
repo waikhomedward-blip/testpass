@@ -31,10 +31,10 @@ export default async function BuyerSessionPage(props: PageProps<"/buyer/session/
 
   return (
     <div className="mx-auto w-full max-w-lg flex-1 px-6 py-10">
-      <p className="font-mono text-xs font-medium uppercase tracking-wide text-ink-secondary">
+      <p className="type-label font-mono">
         TestPass · {config.label}
       </p>
-      <h1 className="mt-1 text-2xl font-semibold">Your test result</h1>
+      <h1 className="mt-1 type-page-title">Your test result</h1>
       <SessionStatus sessionId={id} />
     </div>
   );

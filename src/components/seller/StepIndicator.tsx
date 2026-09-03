@@ -22,8 +22,8 @@ export default function StepIndicator({
           />
         ))}
       </div>
-      <p className="mt-2 text-xs text-ink-secondary">
-        <span className="font-mono font-semibold">
+      <p className="mt-2 type-body-small text-ink-secondary">
+        <span className="type-metadata font-semibold">
           {String(current + 1).padStart(2, "0")}/{String(steps.length).padStart(2, "0")}
         </span>{" "}
         <span className="font-medium">{steps[current]}</span>

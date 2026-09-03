@@ -16,7 +16,7 @@ export default function SubmittedScreen({ verdict }: { verdict: string | null })
           <path d="M5 10.5l3.5 3.5L15 6.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </span>
-      <p className="mt-3 text-lg font-semibold">Submitted — thanks!</p>
+      <p className="mt-3 type-section-title">Submitted — thanks!</p>
       <p className="mt-2 text-sm text-ink-secondary">The buyer has your test result now. You&apos;re done.</p>
       {verdict && verdict !== "DEMONSTRATED" && (
         <p className="mt-3 text-xs text-ink-secondary">

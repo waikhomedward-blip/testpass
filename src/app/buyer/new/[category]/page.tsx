@@ -15,7 +15,7 @@ export default async function NewSessionPage(props: PageProps<"/buyer/new/[categ
     );
     return (
       <div className="mx-auto w-full max-w-lg flex-1 px-6 py-16">
-        <h1 className="text-2xl font-semibold">{config.label} is coming soon</h1>
+        <h1 className="type-page-title">{config.label} is coming soon</h1>
         <p className="mt-3 text-ink-secondary">
           TestPass ships one category at a time so each test is actually reliable. {config.label}{" "}
           testing ({config.functionTested}) is on the roadmap
@@ -31,7 +31,7 @@ export default async function NewSessionPage(props: PageProps<"/buyer/new/[categ
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-signal/10 text-signal">
           <CategoryIcon category={config.category} className="h-5 w-5" />
         </span>
-        <h1 className="text-2xl font-semibold">Test a {config.label}</h1>
+        <h1 className="type-page-title">Test a {config.label}</h1>
       </div>
       <p className="mt-2 text-ink-secondary">{config.shortPitch}</p>
       <div className="mt-6">

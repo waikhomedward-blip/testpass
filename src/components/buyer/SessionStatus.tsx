@@ -151,7 +151,7 @@ function PaywallCard({ sessionId, session }: { sessionId: string; session: Sessi
   const config = CATEGORY_CONFIG[session.category];
   return (
     <div className="rounded-[var(--radius-lg)] border border-border-subtle bg-card p-6 shadow-card">
-      <p className="text-[11px] font-medium uppercase tracking-wide text-ink-secondary">Your test is complete</p>
+      <p className="type-label">Your test is complete</p>
       <p className="mt-1 text-base font-semibold">
         {config.label}
         {session.model ? ` — ${session.model}` : ""}
@@ -200,16 +200,16 @@ function EvidenceReport({
   return (
     <div className="rounded-[var(--radius-lg)] border border-border-subtle bg-card p-6 shadow-card">
       {/* 1. What was tested */}
-      <p className="text-[11px] font-medium uppercase tracking-wide text-ink-secondary">What was tested</p>
+      <p className="type-label">What was tested</p>
       <div className="mt-1 flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
         <p className="text-base font-semibold">{ev.function_tested}</p>
-        <span className="font-mono text-[11px] text-ink-secondary">{ev.capability_label}</span>
+        <span className="type-metadata">{ev.capability_label}</span>
       </div>
-      <p className="mt-0.5 text-xs text-ink-secondary">{ev.primitive_level}</p>
+      <p className="type-body-small mt-0.5 text-ink-secondary">{ev.primitive_level}</p>
 
       {/* 2. What TestPass observed */}
       <div className="mt-4 border-t border-border-subtle pt-4">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-ink-secondary">What TestPass observed</p>
+        <p className="type-label">What TestPass observed</p>
         <p className="mt-1 text-sm text-foreground">{ev.reasoning}</p>
         {ev.cosmetic_note && (
           <p className="mt-2 text-xs italic text-ink-secondary">
@@ -229,14 +229,12 @@ function EvidenceReport({
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-border-subtle pt-4 text-xs text-ink-secondary">
         {ev.association_strength && <span>Device association: {ev.association_strength.toLowerCase()}</span>}
         {bluetoothPath && <EvidencePathTag path={bluetoothPath} />}
-        {completedAt && <span className="font-mono">{formatCompletedAt(completedAt)}</span>}
+        {completedAt && <span className="type-metadata">{formatCompletedAt(completedAt)}</span>}
       </div>
 
       {/* 5. What this means for the buyer */}
       <div className="mt-4 border-t border-border-subtle pt-4">
-        <p className="text-[11px] font-medium uppercase tracking-wide text-ink-secondary">
-          What this means for you
-        </p>
+        <p className="type-label">What this means for you</p>
         <p className="mt-1 text-sm font-semibold">{decision}</p>
         <p className="mt-0.5 text-xs text-ink-secondary">{explanation}</p>
       </div>
@@ -271,7 +269,7 @@ function formatCompletedAt(iso: string): string {
 function ImageGrid({ title, images }: { title: string; images: { url: string; filename: string }[] }) {
   return (
     <div className="mt-4 border-t border-border-subtle pt-4">
-      <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-ink-secondary">{title}</p>
+      <p className="type-label mb-2">{title}</p>
       <div className="grid grid-cols-3 gap-1.5">
         {images.map((img) => (
           <a key={img.filename} href={img.url} target="_blank" rel="noopener noreferrer">

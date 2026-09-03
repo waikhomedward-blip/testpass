@@ -18,9 +18,7 @@ export default function Home() {
         </p>
       </div>
 
-      <h2 className="mt-12 text-sm font-medium uppercase tracking-wide text-ink-secondary">
-        Pick what you&apos;re buying
-      </h2>
+      <h2 className="type-label mt-12">Pick what you&apos;re buying</h2>
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {CATEGORY_ORDER.map((cat) => {
           const cfg = CATEGORY_CONFIG[cat];
@@ -50,9 +48,7 @@ export default function Home() {
                 <div className="mt-4 flex items-center justify-between">
                   <p className="text-sm font-medium text-signal group-hover:underline">Start a test →</p>
                   {cfg.capabilityLabel !== "CONFIRMED" && (
-                    <span className="text-[11px] font-medium uppercase tracking-wide text-ink-secondary">
-                      {cfg.capabilityLabel}
-                    </span>
+                    <span className="type-label">{cfg.capabilityLabel}</span>
                   )}
                 </div>
               )}

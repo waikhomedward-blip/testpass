@@ -203,3 +203,85 @@ body {
   color: var(--ink-secondary);
   letter-spacing: 0.02em;
 }
+
+/* ---------------------------------------------------------------------
+ * TestPass Visual System — Wave 1.1 typography roles.
+ *
+ * Before this, the "eyebrow label" pattern alone existed as five slightly
+ * different hand-typed Tailwind strings across the codebase (text-xs vs.
+ * text-[11px], font-mono present or not) — the kind of drift that makes a
+ * system stop looking like a system. Eight explicit roles, each with one
+ * job:
+ *
+ *   display        — not yet used anywhere in-product (no marketing hero
+ *                     exists), reserved for if one ever does. Largest text
+ *                     in the system by definition, so it's defined once
+ *                     here rather than invented ad hoc if that day comes.
+ *   type-page-title — the one H1 per screen ("Test a GoPro", "My tests").
+ *   type-section-title — a named subsection within a screen (e.g. "Send
+ *                     this link to the seller").
+ *   type-body       — default running text.
+ *   type-body-small — secondary/supporting text at the next size down.
+ *   type-label      — the uppercase eyebrow/section-label pattern.
+ *   type-metadata   — small monospaced machine-readable text: IDs,
+ *                     timestamps, capability tags.
+ *   type-code       — larger monospaced text for a value meant to be read
+ *                     or copied character-by-character (a challenge code).
+ *
+ * Implemented with @utility (not a plain class) so these compose exactly
+ * like any Tailwind utility — safe to combine with color/spacing
+ * utilities in the same className without cascade-order surprises.
+ * ------------------------------------------------------------------- */
+
+@utility type-display {
+  font-size: 40px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+}
+
+@utility type-page-title {
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+@utility type-section-title {
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+@utility type-body {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+@utility type-body-small {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@utility type-label {
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-secondary);
+}
+
+@utility type-metadata {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--ink-secondary);
+}
+
+@utility type-code {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}

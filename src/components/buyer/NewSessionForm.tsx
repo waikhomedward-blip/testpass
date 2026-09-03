@@ -86,7 +86,7 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
           </svg>
           Test session created
         </p>
-        <h2 className="mt-1 text-lg font-semibold">Send this link to the seller</h2>
+        <h2 className="mt-1 type-section-title">Send this link to the seller</h2>
         <p className="mt-1 text-sm text-ink-secondary">
           They can open it on any phone — no account, no install. It takes about{" "}
           {Math.round(config.estimatedSeconds / 30) * 30 || 90} seconds.
@@ -128,7 +128,7 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
         </p>
 
         <div className="mt-6 border-t border-border pt-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-ink-secondary">Test status</p>
+          <p className="type-label">Test status</p>
           <SessionStatus sessionId={created.id} />
         </div>
 

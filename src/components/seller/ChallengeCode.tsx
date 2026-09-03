@@ -9,11 +9,9 @@ export default function ChallengeCode({ code, hint }: { code: string | null; hin
     <div className="border-t border-border-subtle pt-4">
       <div className="flex items-center gap-2">
         <span className="h-3 w-0.5 shrink-0 bg-signal" aria-hidden="true" />
-        <p className="font-mono text-[11px] font-medium uppercase tracking-wide text-ink-secondary">Test code</p>
+        <p className="type-label font-mono">Test code</p>
       </div>
-      <p className="mt-2 font-mono text-[28px] font-bold leading-none tracking-wide text-foreground">
-        {code ?? "Preparing…"}
-      </p>
+      <p className="type-code mt-2 text-foreground">{code ?? "Preparing…"}</p>
       {hint && <p className="mt-2 text-xs text-ink-secondary">{hint}</p>}
     </div>
   );
