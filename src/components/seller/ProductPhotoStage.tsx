@@ -32,7 +32,7 @@ export default function ProductPhotoStage({
   if (state === "idle") {
     return (
       <div className="space-y-4">
-        <p className="text-sm text-foreground/70">
+        <p className="text-sm text-ink-secondary">
           Last step: one photo of the whole {deviceLabel} itself, so the buyer can see the actual
           item — not a stock photo. This isn&apos;t part of the function test.
         </p>
@@ -74,7 +74,7 @@ export default function ProductPhotoStage({
     <div className="space-y-4">
       <CameraStage videoRef={videoRef} state={state} videoReady={videoReady} onVideoReady={() => setVideoReady(true)} />
       <canvas ref={canvasRef} className="hidden" />
-      <p className="text-sm text-foreground/70">Frame the whole {deviceLabel} in the shot, then capture.</p>
+      <p className="text-sm text-ink-secondary">Frame the whole {deviceLabel} in the shot, then capture.</p>
       <button
         onClick={handleCapture}
         disabled={!videoReady}

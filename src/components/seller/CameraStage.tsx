@@ -20,7 +20,7 @@ export default function CameraStage({
   overlay?: React.ReactNode;
 }) {
   return (
-    <div className="relative aspect-video overflow-hidden rounded-[var(--radius-lg)] border border-border bg-card shadow-card">
+    <div className="relative aspect-video overflow-hidden rounded-[var(--radius-lg)] border border-border-subtle bg-card shadow-card">
       <video
         ref={videoRef}
         onPlaying={onVideoReady}
@@ -32,7 +32,7 @@ export default function CameraStage({
       />
       {!videoReady && (state === "starting" || state === "live") && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-          <span className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-signal motion-reduce:animate-none" />
+          <span className="h-6 w-6 animate-spin rounded-full border-2 border-border-subtle border-t-signal motion-reduce:animate-none" />
           <span className="text-xs text-ink-secondary">Starting camera…</span>
         </div>
       )}

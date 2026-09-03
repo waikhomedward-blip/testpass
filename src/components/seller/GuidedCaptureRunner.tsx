@@ -10,6 +10,8 @@ import SubmittedScreen from "./SubmittedScreen";
 import { useCamera } from "./useCamera";
 import CameraStage from "./CameraStage";
 import ProductPhotoStage from "./ProductPhotoStage";
+import NumberedSteps from "./NumberedSteps";
+import ChallengeCode from "./ChallengeCode";
 
 type Phase = "prepare" | "capture" | "product-photo" | "review" | "submitting" | "done" | "submit-error";
 type BurstSubPhase = "ready" | "countdown" | "capturing";
@@ -171,32 +173,20 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
       <div className="space-y-5">
         <StepIndicator steps={STEP_LABELS} current={0} />
         {prepare.introTitle && (
-          <div className="rounded-[var(--radius-lg)] border border-border bg-card p-4 shadow-card">
+          <div>
             <p className="text-sm font-semibold">{prepare.introTitle}</p>
             {prepare.introDescription && <p className="mt-1 text-sm text-ink-secondary">{prepare.introDescription}</p>}
           </div>
         )}
         {prepare.notes && prepare.notes.length > 0 && (
-          <ul className="list-disc space-y-1.5 pl-5 text-sm text-foreground/70">
+          <ul className="list-disc space-y-1.5 pl-5 text-sm text-ink-secondary">
             {prepare.notes.map((note, i) => (
               <li key={i}>{note}</li>
             ))}
           </ul>
         )}
-        {prepare.showStandardInstructions && (
-          <ol className="list-decimal space-y-2 pl-5 text-sm">
-            {catConfig.sellerInstructions.map((step, i) => (
-              <li key={i}>{step}</li>
-            ))}
-          </ol>
-        )}
-        {config.useChallenge && (
-          <div className="rounded-[var(--radius-lg)] border border-signal/25 bg-signal/[0.04] p-4">
-            <p className="text-xs font-medium uppercase tracking-wide text-ink-secondary">Your one-time code</p>
-            <p className="mt-1 font-mono text-2xl font-semibold tracking-wider text-foreground">{challenge ?? "Preparing…"}</p>
-            {prepare.challengeHint && <p className="mt-2 text-xs text-ink-secondary">{prepare.challengeHint}</p>}
-          </div>
-        )}
+        {prepare.showStandardInstructions && <NumberedSteps items={catConfig.sellerInstructions} />}
+        {config.useChallenge && <ChallengeCode code={challenge} hint={prepare.challengeHint} />}
         <p className="text-xs text-ink-secondary">TestPass will collect: {catConfig.dataCollected.join("; ")}.</p>
         <button
           onClick={beginCapture}
@@ -284,7 +274,7 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
           </>
         ) : (
           <>
-            <p className="text-sm text-foreground/70">{currentStep.instructionText(challenge)}</p>
+            <p className="text-sm text-ink-secondary">{currentStep.instructionText(challenge)}</p>
             <CameraStage
               videoRef={videoRef}
               state={cameraState}
@@ -323,6 +313,10 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
         {burstShots.length > 0 && (
           <div>
             <p className="mb-2 text-xs font-medium text-ink-secondary">{burstShots[0].label}</p>
+            {/* No .evidence-frame here deliberately — at 5-across thumbnail
+                scale the registration corners would read as visual noise
+                rather than a legible "this is evidence" cue. Reserved for
+                the larger single-shot/product-photo review images below. */}
             <div className="grid grid-cols-5 gap-1">
               {burstShots.map((s, i) => (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -346,7 +340,7 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
                 <img
                   src={`data:image/jpeg;base64,${s.base64}`}
                   alt={s.label}
-                  className="aspect-video w-full rounded-lg object-cover"
+                  className="evidence-frame aspect-video w-full rounded-lg object-cover"
                 />
               </div>
             ))}
@@ -357,7 +351,11 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
           <div>
             <p className="mb-2 text-xs font-medium text-ink-secondary">Photo of the device</p>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`data:image/jpeg;base64,${productPhoto}`} alt={catConfig.label} className="aspect-video w-full rounded-lg object-cover" />
+            <img
+              src={`data:image/jpeg;base64,${productPhoto}`}
+              alt={catConfig.label}
+              className="evidence-frame aspect-video w-full rounded-lg object-cover"
+            />
           </div>
         )}
 

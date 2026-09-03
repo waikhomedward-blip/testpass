@@ -8,6 +8,8 @@ import { submitCapture } from "@/lib/submit-capture";
 import StepIndicator from "./StepIndicator";
 import SubmittedScreen from "./SubmittedScreen";
 import ProductPhotoStage from "./ProductPhotoStage";
+import NumberedSteps from "./NumberedSteps";
+import ChallengeCode from "./ChallengeCode";
 
 const config = CATEGORY_CONFIG.camera;
 const STEPS = ["Your code", "Upload photos", "Product photo", "Review", "Submit"];
@@ -101,16 +103,8 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
     return (
       <div className="space-y-4">
         <StepIndicator steps={STEPS} current={0} />
-        <div className="rounded-[var(--radius-lg)] border border-signal/25 bg-signal/[0.04] p-6 text-center">
-          <p className="text-xs font-medium uppercase tracking-wide text-ink-secondary">Your one-time code</p>
-          <p className="mt-2 font-mono text-3xl font-bold tracking-widest text-foreground">{code}</p>
-          <p className="mt-2 text-xs text-ink-secondary">Keep this visible — you&apos;ll photograph it twice.</p>
-        </div>
-        <ol className="list-decimal space-y-2 pl-5 text-sm">
-          {config.sellerInstructions.slice(1).map((step, i) => (
-            <li key={i}>{step}</li>
-          ))}
-        </ol>
+        <ChallengeCode code={code} hint="Keep this visible — you'll photograph it twice." />
+        <NumberedSteps items={config.sellerInstructions.slice(1)} />
         <p className="text-xs text-ink-secondary">TestPass will collect: {config.dataCollected.join("; ")}.</p>
         <button
           onClick={goToUpload}
@@ -153,11 +147,11 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
           <div className="grid grid-cols-2 gap-2">
             {wide && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={wide.previewUrl} alt="Wide shot" className="aspect-square w-full rounded-lg object-cover" />
+              <img src={wide.previewUrl} alt="Wide shot" className="evidence-frame aspect-square w-full rounded-lg object-cover" />
             )}
             {zoom && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={zoom.previewUrl} alt="Zoom shot" className="aspect-square w-full rounded-lg object-cover" />
+              <img src={zoom.previewUrl} alt="Zoom shot" className="evidence-frame aspect-square w-full rounded-lg object-cover" />
             )}
           </div>
         </div>
@@ -165,7 +159,11 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
           <div>
             <p className="mb-2 text-xs font-medium text-ink-secondary">Photo of the device</p>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={`data:image/jpeg;base64,${productPhoto}`} alt="Camera" className="aspect-video w-full rounded-lg object-cover" />
+            <img
+              src={`data:image/jpeg;base64,${productPhoto}`}
+              alt="Camera"
+              className="evidence-frame aspect-video w-full rounded-lg object-cover"
+            />
           </div>
         )}
         {phase === "review" && (
@@ -202,7 +200,8 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
     <div className="space-y-4">
       <StepIndicator steps={STEPS} current={1} />
 
-      <div className="rounded-lg border border-dashed border-border px-3 py-2 text-center text-xs text-ink-secondary">
+      <div className="flex items-center justify-center gap-2 text-xs text-ink-secondary">
+        <span className="h-3 w-0.5 shrink-0 bg-signal" aria-hidden="true" />
         Code for this session: <span className="font-mono font-semibold text-foreground">{code}</span>
       </div>
 
@@ -260,7 +259,7 @@ function PhotoSlot({
       />
       <div
         className={`flex aspect-square flex-col items-center justify-center overflow-hidden rounded-[var(--radius-lg)] border ${
-          shot ? "border-signal shadow-card" : "border-dashed border-border-control"
+          shot ? "evidence-frame border-signal shadow-card" : "border-dashed border-border-control"
         } bg-card text-center`}
       >
         {shot ? (

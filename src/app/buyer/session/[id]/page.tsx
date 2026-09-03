@@ -18,7 +18,7 @@ export default async function BuyerSessionPage(props: PageProps<"/buyer/session/
     return (
       <div className="mx-auto w-full max-w-lg flex-1 px-6 py-16 text-center">
         <h1 className="text-xl font-semibold">TestPass isn&apos;t fully set up yet</h1>
-        <p className="mt-3 text-foreground/60">
+        <p className="mt-3 text-ink-secondary">
           Connect Supabase (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY) and run supabase/schema.sql.
         </p>
       </div>
@@ -31,7 +31,7 @@ export default async function BuyerSessionPage(props: PageProps<"/buyer/session/
 
   return (
     <div className="mx-auto w-full max-w-lg flex-1 px-6 py-10">
-      <p className="text-xs font-medium uppercase tracking-wide text-foreground/50">
+      <p className="font-mono text-xs font-medium uppercase tracking-wide text-ink-secondary">
         TestPass · {config.label}
       </p>
       <h1 className="mt-1 text-2xl font-semibold">Your test result</h1>

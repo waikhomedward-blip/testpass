@@ -8,6 +8,7 @@ import SubmittedScreen from "./SubmittedScreen";
 import { useCamera } from "./useCamera";
 import CameraStage from "./CameraStage";
 import ProductPhotoStage from "./ProductPhotoStage";
+import NumberedSteps from "./NumberedSteps";
 
 const config = CATEGORY_CONFIG.gopro;
 const STEPS = ["Bluetooth", "Photo", "Product photo", "Review", "Submit"];
@@ -202,11 +203,7 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
     return (
       <div className="space-y-4">
         <StepIndicator steps={STEPS} current={0} />
-        <ol className="list-decimal space-y-2 pl-5 text-sm">
-          {config.sellerInstructions.map((step, i) => (
-            <li key={i}>{step}</li>
-          ))}
-        </ol>
+        <NumberedSteps items={config.sellerInstructions} />
         <p className="text-xs text-ink-secondary">
           TestPass will collect: {config.dataCollected.join("; ")}. Bluetooth support varies by
           camera model and browser — if it doesn&apos;t work, you can skip straight to the photo step.
@@ -316,14 +313,22 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
             <div>
               <p className="mb-2 text-xs font-medium text-ink-secondary">Status screen</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`data:image/jpeg;base64,${frame}`} alt="captured status screen" className="aspect-video w-full rounded-lg object-cover" />
+              <img
+                src={`data:image/jpeg;base64,${frame}`}
+                alt="captured status screen"
+                className="evidence-frame aspect-video w-full rounded-lg object-cover"
+              />
             </div>
           )}
           {productPhoto && (
             <div>
               <p className="mb-2 text-xs font-medium text-ink-secondary">Photo of the device</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`data:image/jpeg;base64,${productPhoto}`} alt="GoPro" className="aspect-video w-full rounded-lg object-cover" />
+              <img
+                src={`data:image/jpeg;base64,${productPhoto}`}
+                alt="GoPro"
+                className="evidence-frame aspect-video w-full rounded-lg object-cover"
+              />
             </div>
           )}
           <div className="flex gap-2">

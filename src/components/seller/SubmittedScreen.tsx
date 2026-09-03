@@ -10,7 +10,7 @@
 // primitive jargon they were never meant to understand.
 export default function SubmittedScreen({ verdict }: { verdict: string | null }) {
   return (
-    <div className="rounded-[var(--radius-lg)] border border-border bg-card p-6 text-center shadow-card">
+    <div className="rounded-[var(--radius-lg)] border border-border-subtle bg-card p-6 text-center shadow-card">
       <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-proof-wash text-proof">
         <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5" aria-hidden="true">
           <path d="M5 10.5l3.5 3.5L15 6.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />

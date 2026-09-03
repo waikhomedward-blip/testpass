@@ -17,13 +17,16 @@ export default function StepIndicator({
           <div
             key={i}
             className={`h-1 flex-1 rounded-full transition-colors ${
-              i <= current ? "bg-signal" : "bg-border"
+              i <= current ? "bg-signal" : "bg-border-subtle"
             }`}
           />
         ))}
       </div>
-      <p className="mt-2 text-xs font-medium text-ink-secondary">
-        Step {current + 1} of {steps.length} · {steps[current]}
+      <p className="mt-2 text-xs text-ink-secondary">
+        <span className="font-mono font-semibold">
+          {String(current + 1).padStart(2, "0")}/{String(steps.length).padStart(2, "0")}
+        </span>{" "}
+        <span className="font-medium">{steps[current]}</span>
       </p>
     </div>
   );
