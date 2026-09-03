@@ -21,6 +21,7 @@ export async function createSession(input: {
   model?: string | null;
   listingUrl?: string | null;
   listingNotes?: string | null;
+  cohort?: string | null;
 }): Promise<{ id: string }> {
   const db = getSupabaseAdmin();
   const id = newSessionId();
@@ -34,6 +35,13 @@ export async function createSession(input: {
     listing_notes: input.listingNotes ?? null,
     status: "NOT_STARTED",
     expires_at,
+    // Server/admin-set only (src/app/api/sessions/create/route.ts matches a
+    // private query param against QA_COHORT_SECRET before ever setting
+    // this) — never a client-supplied or public-facing field. null =
+    // ordinary/genuine buyer, unlabeled by default. Lets revenue/funnel
+    // reporting exclude compensated physical-QA participants from
+    // willingness-to-pay signal without deleting or hiding their rows.
+    cohort: input.cohort ?? null,
     // Server-controlled, not a hardcoded true: when the paywall is off
     // (PAYWALL_ENABLED false, today's default), every session starts
     // unlocked, same as before. Once the paywall is on, new sessions must
@@ -157,6 +165,12 @@ export async function recordEvidenceAndComplete(input: {
     raw_data: input.rawData,
     image_paths: input.imagePaths,
     cosmetic_note: input.cosmeticNote,
+    // Billing-only flag, orthogonal to `verdict` — see
+    // supabase/add-launch-operating-fields.sql. true means TestPass's own
+    // evaluator infra failed to produce a real result (fallbackEvaluation),
+    // never that the seller's device failed. The checkout route refuses to
+    // charge for a session whose only evidence row has this set.
+    technical_error: !!input.technicalError,
   });
   if (error) throw error;
 
@@ -234,6 +248,39 @@ export async function attachSignedImageUrls(session: SessionWithEvidence): Promi
     })
   );
   return { ...session, evidence };
+}
+
+// Minimal feedback system (Sections 23-26 of the beta operating directive)
+// — one small table for seller/buyer micro-feedback AND report-a-problem
+// submissions (stage: "report_problem"), deliberately not a separate
+// research-management platform. Best-effort, mirrors recordEvent: a
+// feedback-logging failure must never break the page the person is on.
+export async function submitFeedback(input: {
+  sessionId: string | null;
+  actor: "buyer" | "seller";
+  category?: string | null;
+  stage: string;
+  rating?: string | null;
+  freeText?: string | null;
+  page?: string | null;
+  cohort?: string | null;
+}): Promise<boolean> {
+  const db = getSupabaseAdmin();
+  const { error } = await db.from("feedback").insert({
+    session_id: input.sessionId,
+    actor: input.actor,
+    category: input.category ?? null,
+    stage: input.stage,
+    rating: input.rating ?? null,
+    free_text: input.freeText ?? null,
+    page: input.page ?? null,
+    cohort: input.cohort ?? null,
+  });
+  if (error) {
+    console.error("submitFeedback failed:", error.message);
+    return false;
+  }
+  return true;
 }
 
 export async function uploadCapture(
