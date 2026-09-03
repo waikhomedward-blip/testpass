@@ -95,7 +95,7 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
           <input
             readOnly
             value={sellerUrl}
-            className="flex-1 rounded-lg border border-border bg-background px-3 py-2 font-mono text-xs sm:text-sm"
+            className="flex-1 rounded-lg border border-border-control bg-background px-3 py-2 font-mono text-xs sm:text-sm"
             onFocus={(e) => e.currentTarget.select()}
           />
           <button
@@ -157,7 +157,7 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
           value={listingUrl}
           onChange={(e) => setListingUrl(e.target.value)}
           placeholder="https://..."
-          className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-lg border border-border-control bg-background px-3 py-2 text-sm"
         />
       </label>
 
@@ -168,7 +168,15 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
           value={model}
           onChange={(e) => setModel(e.target.value)}
           placeholder={config.modelFamily}
-          className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+          // Some categories' modelFamily strings (e.g. GoPro's "GoPro HERO
+          // / MAX (Bluetooth LE capable models)") are long enough to hard-
+          // clip mid-word inside a single-line input on a ~390px phone.
+          // `truncate` gives it a clean "…" instead — standard technique
+          // for a long placeholder in a short field. Purely presentational:
+          // doesn't touch the category copy, and typed text still scrolls
+          // with the caret as normal (browsers don't apply text-overflow
+          // while a field has real, focused input).
+          className="mt-1 w-full truncate rounded-lg border border-border-control bg-background px-3 py-2 text-sm"
         />
       </label>
 
@@ -179,7 +187,7 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
           onChange={(e) => setNotes(e.target.value)}
           placeholder={config.knownFailureMode}
           rows={2}
-          className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+          className="mt-1 w-full rounded-lg border border-border-control bg-background px-3 py-2 text-sm"
         />
       </label>
 

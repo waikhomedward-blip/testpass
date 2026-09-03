@@ -43,7 +43,7 @@ export default function ProductPhotoStage({
           Turn on camera
         </button>
         {onSkip && (
-          <button onClick={onSkip} className="w-full rounded-lg border border-border py-2 text-sm font-medium">
+          <button onClick={onSkip} className="w-full rounded-lg border border-border-control py-2 text-sm font-medium">
             Skip this step
           </button>
         )}
@@ -58,11 +58,11 @@ export default function ProductPhotoStage({
           TestPass couldn&apos;t access your camera. Check your browser&apos;s camera permission for this
           site and try again.
         </p>
-        <button onClick={start} className="rounded-lg border border-border px-4 py-2 text-sm font-medium">
+        <button onClick={start} className="rounded-lg border border-border-control px-4 py-2 text-sm font-medium">
           Try again
         </button>
         {onSkip && (
-          <button onClick={onSkip} className="w-full rounded-lg border border-border py-2 text-sm font-medium">
+          <button onClick={onSkip} className="w-full rounded-lg border border-border-control py-2 text-sm font-medium">
             Skip this step
           </button>
         )}

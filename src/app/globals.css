@@ -23,10 +23,20 @@
   --paper: #f6f3eb;
   --ink: #111315;
   --card: #ffffff;
-  --border: #e4ddc9;
+
+  /* Two border concepts, not one token doing two jobs (Wave 1.1 fix):
+     --border-subtle separates cards/dividers and carries no contrast
+     requirement of its own — it's decorative. --border-control is what
+     lets a person perceive an input/control's boundary, so it's held to
+     WCAG 1.4.11's 3:1 non-text minimum against both --paper and --card
+     (checked: ~3.3:1 and ~3.7:1 respectively). --border stays as an
+     alias to --border-subtle so nothing untouched breaks. */
+  --border-subtle: #e4ddc9;
+  --border-control: #8f8567;
+  --border: var(--border-subtle);
 
   /* Text */
-  --ink-secondary: #697077; /* AA-safe (~4.5:1) on --paper and --card, replaces opacity-faded grays */
+  --ink-secondary: #5c636a; /* Wave 1.1: darkened from #697077 — that was ~4.52:1, too close to the AA line for heavy small-text use. This clears ~5.5:1 on --paper, ~6.1:1 on --card. */
 
   /* Interactive */
   --signal: #1e4be8;
@@ -66,6 +76,8 @@
   --color-ink-secondary: var(--ink-secondary);
   --color-card: var(--card);
   --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-control: var(--border-control);
   --color-accent: var(--accent);
   --color-signal: var(--signal);
   --color-signal-hover: var(--signal-hover);
@@ -89,8 +101,10 @@
     --paper: #111214;
     --ink: #f2f0e9;
     --card: #191a1d;
-    --border: #2c2d31;
-    --ink-secondary: #9aa0a6; /* re-checked at ~4.5:1 on --paper/--card in dark mode */
+    --border-subtle: #2c2d31;
+    --border-control: #666a6f; /* re-checked >=3:1 against both --paper and --card in dark mode */
+    --border: var(--border-subtle);
+    --ink-secondary: #9aa0a6; /* re-checked at ~7:1 on --paper in dark mode — already had headroom */
     --signal: #5b82ff;
     --signal-hover: #7a99ff;
     --proof: #34c98f;

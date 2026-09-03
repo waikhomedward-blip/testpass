@@ -207,17 +207,17 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
             <li key={i}>{step}</li>
           ))}
         </ol>
-        <p className="text-xs text-foreground/50">
+        <p className="text-xs text-ink-secondary">
           TestPass will collect: {config.dataCollected.join("; ")}. Bluetooth support varies by
           camera model and browser — if it doesn&apos;t work, you can skip straight to the photo step.
         </p>
         <button
           onClick={connectBluetooth}
-          className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90"
+          className="w-full rounded-lg bg-signal py-2.5 text-sm font-medium text-white transition-colors hover:bg-signal-hover"
         >
           Connect via Bluetooth
         </button>
-        <button onClick={skipBluetooth} className="w-full rounded-lg border border-border py-2 text-sm font-medium">
+        <button onClick={skipBluetooth} className="w-full rounded-lg border border-border-control py-2 text-sm font-medium">
           Skip — use photo only
         </button>
       </div>
@@ -225,7 +225,7 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
   }
 
   if (phase === "bluetooth-connecting") {
-    return <p className="text-center text-sm text-foreground/60">Pick your GoPro from the browser&apos;s device list…</p>;
+    return <p className="text-center text-sm text-ink-secondary">Pick your GoPro from the browser&apos;s device list…</p>;
   }
 
   if (phase === "camera-instructions") {
@@ -241,7 +241,7 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
             start();
             setPhase("camera-ready");
           }}
-          className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90"
+          className="w-full rounded-lg bg-signal py-2.5 text-sm font-medium text-white transition-colors hover:bg-signal-hover"
         >
           Turn on camera
         </button>
@@ -252,8 +252,11 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
   if (cameraState === "error") {
     return (
       <div className="space-y-3 text-sm">
-        <p>TestPass couldn&apos;t access your camera. Check your browser&apos;s camera permission for this site and try again.</p>
-        <button onClick={start} className="rounded-lg border border-border px-4 py-2 text-sm font-medium">
+        <p className="text-failure">
+          TestPass couldn&apos;t access your camera. Check your browser&apos;s camera permission for this
+          site and try again.
+        </p>
+        <button onClick={start} className="rounded-lg border border-border-control px-4 py-2 text-sm font-medium">
           Try again
         </button>
       </div>
@@ -301,7 +304,7 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
         <button
           onClick={captureFrame}
           disabled={!videoReady}
-          className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40"
+          className="w-full rounded-lg bg-signal py-2.5 text-sm font-medium text-white transition-colors hover:bg-signal-hover disabled:opacity-40"
         >
           Capture photo
         </button>
@@ -311,25 +314,25 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
         <div className="space-y-4">
           {frame && (
             <div>
-              <p className="mb-2 text-xs font-medium text-foreground/50">Status screen</p>
+              <p className="mb-2 text-xs font-medium text-ink-secondary">Status screen</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`data:image/jpeg;base64,${frame}`} alt="captured status screen" className="aspect-video w-full rounded-lg object-cover" />
             </div>
           )}
           {productPhoto && (
             <div>
-              <p className="mb-2 text-xs font-medium text-foreground/50">Photo of the device</p>
+              <p className="mb-2 text-xs font-medium text-ink-secondary">Photo of the device</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`data:image/jpeg;base64,${productPhoto}`} alt="GoPro" className="aspect-video w-full rounded-lg object-cover" />
             </div>
           )}
           <div className="flex gap-2">
-            <button onClick={retake} className="flex-1 rounded-lg border border-border py-2 text-sm font-medium">
+            <button onClick={retake} className="flex-1 rounded-lg border border-border-control py-2 text-sm font-medium">
               Retake
             </button>
             <button
               onClick={submit}
-              className="flex-1 rounded-lg bg-accent py-2 text-sm font-medium text-white hover:opacity-90"
+              className="flex-1 rounded-lg bg-signal py-2 text-sm font-medium text-white transition-colors hover:bg-signal-hover"
             >
               Submit
             </button>
@@ -337,12 +340,12 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
         </div>
       )}
 
-      {phase === "submitting" && <p className="text-center text-sm text-foreground/60">Submitting…</p>}
+      {phase === "submitting" && <p className="text-center text-sm text-ink-secondary">Submitting…</p>}
 
       {phase === "submit-error" && (
         <div className="space-y-2 text-sm">
-          <p className="text-red-500">{errorMsg}</p>
-          <button onClick={submit} className="rounded-lg border border-border px-4 py-2 text-sm font-medium">
+          <p className="text-failure">{errorMsg}</p>
+          <button onClick={submit} className="rounded-lg border border-border-control px-4 py-2 text-sm font-medium">
             Retry submit
           </button>
         </div>

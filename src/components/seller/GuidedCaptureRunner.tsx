@@ -216,7 +216,7 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
           TestPass couldn&apos;t access your camera. Check your browser&apos;s camera permission for this
           site and try again.
         </p>
-        <button onClick={start} className="rounded-lg border border-border px-4 py-2 text-sm font-medium">
+        <button onClick={start} className="rounded-lg border border-border-control px-4 py-2 text-sm font-medium">
           Try again
         </button>
       </div>
@@ -367,7 +367,7 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
 
         {phase === "review" && (
           <div className="flex gap-2">
-            <button onClick={retake} className="flex-1 rounded-lg border border-border py-2 text-sm font-medium">
+            <button onClick={retake} className="flex-1 rounded-lg border border-border-control py-2 text-sm font-medium">
               {config.retakeButtonLabel ?? "Retake"}
             </button>
             <button
@@ -384,7 +384,7 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
         {phase === "submit-error" && (
           <div className="space-y-2 text-sm">
             <p className="text-failure">{errorMsg}</p>
-            <button onClick={submit} className="rounded-lg border border-border px-4 py-2 text-sm font-medium">
+            <button onClick={submit} className="rounded-lg border border-border-control px-4 py-2 text-sm font-medium">
               Retry submit
             </button>
           </div>

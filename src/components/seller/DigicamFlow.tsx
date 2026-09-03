@@ -170,7 +170,7 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
         )}
         {phase === "review" && (
           <div className="flex gap-2">
-            <button onClick={retake} className="flex-1 rounded-lg border border-border py-2 text-sm font-medium">
+            <button onClick={retake} className="flex-1 rounded-lg border border-border-control py-2 text-sm font-medium">
               Clear photos
             </button>
             <button
@@ -188,7 +188,7 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
         {phase === "submit-error" && (
           <div className="space-y-2 text-sm">
             <p className="text-failure">{errorMsg}</p>
-            <button onClick={submit} className="rounded-lg border border-border px-4 py-2 text-sm font-medium">
+            <button onClick={submit} className="rounded-lg border border-border-control px-4 py-2 text-sm font-medium">
               Retry submit
             </button>
           </div>
@@ -260,7 +260,7 @@ function PhotoSlot({
       />
       <div
         className={`flex aspect-square flex-col items-center justify-center overflow-hidden rounded-[var(--radius-lg)] border ${
-          shot ? "border-signal shadow-card" : "border-dashed border-border"
+          shot ? "border-signal shadow-card" : "border-dashed border-border-control"
         } bg-card text-center`}
       >
         {shot ? (
