@@ -272,14 +272,23 @@ function ImageGrid({ title, images }: { title: string; images: { url: string; fi
       <p className="type-label mb-2">{title}</p>
       <div className="grid grid-cols-3 gap-1.5">
         {images.map((img) => (
-          <a key={img.filename} href={img.url} target="_blank" rel="noopener noreferrer">
-            {/* .evidence-frame: registration corners reserved for captured
-                physical evidence specifically — this is that evidence. */}
+          // .evidence-frame goes on this <a> wrapper, not the <img> inside
+          // it — the corner marks are ::before/::after pseudo-elements,
+          // which don't render on replaced elements like img in any
+          // browser. Registration corners are reserved for captured
+          // physical evidence specifically — this is that evidence.
+          <a
+            key={img.filename}
+            href={img.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="evidence-frame relative block aspect-square overflow-hidden rounded-lg border border-border-subtle"
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={img.url}
               alt={title}
-              className="evidence-frame aspect-square w-full rounded-lg border border-border-subtle object-cover transition-opacity hover:opacity-80"
+              className="h-full w-full object-cover transition-opacity hover:opacity-80"
             />
           </a>
         ))}
