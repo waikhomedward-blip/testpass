@@ -145,25 +145,35 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
         <div>
           <p className="mb-2 text-xs font-medium text-ink-secondary">Wide &amp; zoom test shots</p>
           <div className="grid grid-cols-2 gap-2">
+            {/* .evidence-frame goes on this wrapper div, not the <img>
+                itself — ::before/::after don't render on replaced elements
+                like img in any browser, so the corner marks would silently
+                never appear if applied directly to the image. */}
             {wide && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={wide.previewUrl} alt="Wide shot" className="evidence-frame aspect-square w-full rounded-lg object-cover" />
+              <div className="evidence-frame relative aspect-square overflow-hidden rounded-lg">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={wide.previewUrl} alt="Wide shot" className="h-full w-full object-cover" />
+              </div>
             )}
             {zoom && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={zoom.previewUrl} alt="Zoom shot" className="evidence-frame aspect-square w-full rounded-lg object-cover" />
+              <div className="evidence-frame relative aspect-square overflow-hidden rounded-lg">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={zoom.previewUrl} alt="Zoom shot" className="h-full w-full object-cover" />
+              </div>
             )}
           </div>
         </div>
         {productPhoto && (
           <div>
             <p className="mb-2 text-xs font-medium text-ink-secondary">Photo of the device</p>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={`data:image/jpeg;base64,${productPhoto}`}
-              alt="Camera"
-              className="evidence-frame aspect-video w-full rounded-lg object-cover"
-            />
+            <div className="evidence-frame relative aspect-video overflow-hidden rounded-lg">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`data:image/jpeg;base64,${productPhoto}`}
+                alt="Camera"
+                className="h-full w-full object-cover"
+              />
+            </div>
           </div>
         )}
         {phase === "review" && (

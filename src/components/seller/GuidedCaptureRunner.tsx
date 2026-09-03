@@ -331,17 +331,22 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
           </div>
         )}
 
+        {/* .evidence-frame goes on a wrapper div, not the <img> — the
+            corner marks are ::before/::after pseudo-elements, which don't
+            render on replaced elements like img in any browser. */}
         {singleShots.length > 0 && (
           <div className="grid grid-cols-2 gap-2">
             {singleShots.map((s, i) => (
               <div key={i}>
                 <p className="mb-1 text-xs font-medium text-ink-secondary">{s.label}</p>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={`data:image/jpeg;base64,${s.base64}`}
-                  alt={s.label}
-                  className="evidence-frame aspect-video w-full rounded-lg object-cover"
-                />
+                <div className="evidence-frame relative aspect-video overflow-hidden rounded-lg">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`data:image/jpeg;base64,${s.base64}`}
+                    alt={s.label}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
               </div>
             ))}
           </div>
@@ -350,12 +355,14 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
         {productPhoto && (
           <div>
             <p className="mb-2 text-xs font-medium text-ink-secondary">Photo of the device</p>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={`data:image/jpeg;base64,${productPhoto}`}
-              alt={catConfig.label}
-              className="evidence-frame aspect-video w-full rounded-lg object-cover"
-            />
+            <div className="evidence-frame relative aspect-video overflow-hidden rounded-lg">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`data:image/jpeg;base64,${productPhoto}`}
+                alt={catConfig.label}
+                className="h-full w-full object-cover"
+              />
+            </div>
           </div>
         )}
 

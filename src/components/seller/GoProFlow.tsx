@@ -309,26 +309,33 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
 
       {phase === "review" && (
         <div className="space-y-4">
+          {/* .evidence-frame goes on a wrapper div, not the <img> — the
+              corner marks are ::before/::after pseudo-elements, which
+              don't render on replaced elements like img in any browser. */}
           {frame && (
             <div>
               <p className="mb-2 text-xs font-medium text-ink-secondary">Status screen</p>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={`data:image/jpeg;base64,${frame}`}
-                alt="captured status screen"
-                className="evidence-frame aspect-video w-full rounded-lg object-cover"
-              />
+              <div className="evidence-frame relative aspect-video overflow-hidden rounded-lg">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`data:image/jpeg;base64,${frame}`}
+                  alt="captured status screen"
+                  className="h-full w-full object-cover"
+                />
+              </div>
             </div>
           )}
           {productPhoto && (
             <div>
               <p className="mb-2 text-xs font-medium text-ink-secondary">Photo of the device</p>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={`data:image/jpeg;base64,${productPhoto}`}
-                alt="GoPro"
-                className="evidence-frame aspect-video w-full rounded-lg object-cover"
-              />
+              <div className="evidence-frame relative aspect-video overflow-hidden rounded-lg">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`data:image/jpeg;base64,${productPhoto}`}
+                  alt="GoPro"
+                  className="h-full w-full object-cover"
+                />
+              </div>
             </div>
           )}
           <div className="flex gap-2">
