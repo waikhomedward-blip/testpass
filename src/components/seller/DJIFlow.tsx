@@ -3,43 +3,52 @@
 import { RunnerConfig } from "@/lib/runner-types";
 import GuidedCaptureRunner from "./GuidedCaptureRunner";
 
+// One-Phone Seller Principle redesign — see the "dji" entry in
+// src/lib/primitives.ts for the full story. The old design asked the
+// seller to hold a TestPass code next to a screen shown on the very phone
+// that was about to become the camera, which is physically impossible
+// without a second device. Both steps are now same-phone companion-app
+// screenshot handoffs instead of live captures, so no challenge code is
+// generated at all — there's nothing left to hold up in a photo.
 const runnerConfig: RunnerConfig = {
   category: "dji",
   filenamePrefix: "dji",
   includeProductPhoto: true,
   productPhotoDeviceLabel: "drone",
   retakeButtonLabel: "Retake both",
-  useChallenge: true,
-  challengePrefix: "TP-",
   reviewNote:
-    "This is deliberately narrow: the code proves the status-screen photo is fresh from this session. It does not prove the app's connection to the aircraft is live, or certify the drone's complete condition.",
+    "This is deliberately narrow: these are screenshots from the DJI app, not live captures, so they can't prove the app's connection to the aircraft is live right now. It does not certify the drone's complete condition.",
   prepare: {
     showStandardInstructions: true,
-    challengeHint: "Hold this code next to your phone/tablet showing the aircraft's status screen for the first capture.",
-    buttonLabel: "Turn on camera",
+    buttonLabel: "Continue",
   },
   steps: [
     {
-      type: "single-capture",
+      type: "file-upload",
       id: "status-screen",
-      label: "Status screen + code",
-      instructionText: (challenge) =>
-        `Frame the aircraft's status screen (serial number, binding status, warnings) with ${challenge ?? "your code"} held next to your phone/tablet, both readable.`,
-      buttonLabel: "Capture status screen",
+      label: "Status screen",
+      instructionText:
+        "In the DJI Fly or DJI GO 4 app on this phone, open the aircraft's status screen (serial number, binding status, warnings) and screenshot it. Then choose that screenshot below.",
+      pickerLabel: "Choose status screenshot",
     },
     {
-      type: "single-capture",
+      type: "file-upload",
       id: "battery-screen",
       label: "Battery screen",
-      instructionText: () => "Without ending this TestPass camera session, now frame the battery detail screen and capture it.",
-      buttonLabel: "Capture battery screen",
+      instructionText:
+        "Now do the same for the battery detail screen (cycle count / health, if shown): screenshot it, then choose it below.",
+      pickerLabel: "Choose battery screenshot",
     },
   ],
-  buildSubmission: ({ shots, challenge, productPhoto }) => ({
-    context: `Expected one-time code: ${challenge}. Screens captured, in order: ${shots.map((s) => s.label).join(", ")}. Image 1 should show the code held next to the app's status screen. Image 2 is the battery detail screen, captured in the same session immediately afterward.${
-      productPhoto ? " The final image is a general photo of the whole drone — not one of the app screens." : ""
+  buildSubmission: ({ shots, productPhoto }) => ({
+    context: `Screens submitted, in order: ${shots.map((s) => s.label).join(", ")}. Both are same-phone screenshots of the DJI app, not live camera captures — Image 1 is the aircraft status screen, Image 2 is the battery detail screen, taken moments apart in the same session.${
+      productPhoto ? " The final image is a general, live-camera photo of the whole drone — cosmetic only, not part of the app-screen evidence." : ""
     }`,
-    rawData: { expectedCode: challenge, shotLabels: shots.map((s) => s.label), hasProductPhoto: !!productPhoto },
+    rawData: {
+      shotLabels: shots.map((s) => s.label),
+      evidenceMethod: "screenshot_upload",
+      hasProductPhoto: !!productPhoto,
+    },
   }),
 };
 

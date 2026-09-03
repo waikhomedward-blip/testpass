@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { CATEGORY_CONFIG } from "@/lib/primitives";
 import { newChallengeCode } from "@/lib/challenge";
+import { resizeImageFile } from "@/lib/image-resize";
 import { submitCapture } from "@/lib/submit-capture";
 import { CaptureShot, RunnerConfig, RunnerStep } from "@/lib/runner-types";
 import StepIndicator from "./StepIndicator";
@@ -17,12 +18,13 @@ type BurstSubPhase = "ready" | "countdown" | "capturing";
 const slug = (s: string) => s.toLowerCase().replace(/\s+/g, "-");
 
 // The shared seller-flow shell: instructions -> one or more labeled camera
-// captures (a countdown burst or a sequence of single shots) -> optional
-// product photo -> review -> submit -> done/error. This is exactly the
-// shape Switch, DJI, and PS5 already had, hand-written three times — see
-// the founder-fit audit. Category-specific evidence meaning (the evaluator
-// prompt, the context string, raw_data, claim boundaries) never lives here;
-// it comes from CATEGORY_CONFIG and each category's buildSubmission().
+// captures (a countdown burst, a sequence of single shots, or a same-phone
+// file-upload handoff) -> optional product photo -> review -> submit ->
+// done/error. This is exactly the shape Switch, DJI, and PS5 already had,
+// hand-written three times — see the founder-fit audit. Category-specific
+// evidence meaning (the evaluator prompt, the context string, raw_data,
+// claim boundaries) never lives here; it comes from CATEGORY_CONFIG and
+// each category's buildSubmission().
 export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: string; config: RunnerConfig }) {
   const catConfig = CATEGORY_CONFIG[config.category];
   const [phase, setPhase] = useState<Phase>("prepare");
@@ -35,8 +37,18 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
   const [verdict, setVerdict] = useState<string | null>(null);
   const [challenge, setChallenge] = useState<string | null>(null);
   const [startedAt] = useState(() => Date.now());
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const { videoRef, canvasRef, state: cameraState, videoReady, setVideoReady, start, stop, capture } = useCamera();
+
+  // One-Phone Seller Principle: a "file-upload" step never touches this
+  // hook's camera — it's a same-phone companion-app handoff (switch apps,
+  // screenshot, come back, pick the file), not a live capture. Only start
+  // the camera at all if some step in this config actually needs it, and
+  // only when transitioning into/out of a step that needs it — otherwise a
+  // config made entirely of file-upload steps (DJI, Quest) never prompts
+  // for camera permission until the separate product-photo stage does.
+  const stepNeedsCamera = (step: RunnerStep | undefined) => !!step && step.type !== "file-upload";
 
   // Generate the one-time challenge only after hydration, and only yield
   // once (not synchronously) before the state update so this satisfies
@@ -71,7 +83,7 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
   // camera-lifecycle note in useCamera.ts and the audit report for why an
   // `await start()` before mounting CameraStage is unsafe.
   function beginCapture() {
-    start();
+    if (stepNeedsCamera(config.steps[0])) start();
     setStepIndex(0);
     setBurstSubPhase("ready");
     setPhase("capture");
@@ -79,6 +91,17 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
     // event (see the /start route). Never blocks or gates the actual
     // capture flow; a failure here is invisible to the seller on purpose.
     fetch(`/api/sessions/${sessionId}/start`, { method: "POST" }).catch(() => {});
+  }
+
+  // Called after any step (camera or file-upload) advances to the next
+  // step index, to put the camera in the right state for what's next
+  // without forcing every config to be all-camera or all-upload.
+  function syncCameraForStep(nextStep: RunnerStep | undefined) {
+    if (stepNeedsCamera(nextStep)) {
+      if (cameraState !== "live" && cameraState !== "starting") start();
+    } else if (cameraState === "live" || cameraState === "starting") {
+      stop();
+    }
   }
 
   function beginCountdown(step: Extract<RunnerStep, { type: "countdown-burst" }>) {
@@ -101,7 +124,7 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
     const newShots: CaptureShot[] = [];
     for (let i = 0; i < step.shotCount; i++) {
       const shot = capture(step.quality ?? 0.82);
-      if (shot) newShots.push({ stepId: step.id, label: step.label, base64: shot, capturedAt: Date.now() });
+      if (shot) newShots.push({ stepId: step.id, label: step.label, base64: shot, capturedAt: Date.now(), method: "live_camera" });
       await new Promise((r) => setTimeout(r, step.intervalMs));
     }
     setShots((prev) => [...prev, ...newShots]);
@@ -109,6 +132,7 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
       stop();
       goToPostCapturePhase();
     } else {
+      syncCameraForStep(config.steps[stepIndex + 1]);
       setStepIndex((i) => i + 1);
       setBurstSubPhase("ready");
     }
@@ -117,21 +141,52 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
   function captureSingle(step: Extract<RunnerStep, { type: "single-capture" }>) {
     const shot = capture(step.quality ?? 0.85);
     if (!shot) return;
-    setShots((prev) => [...prev, { stepId: step.id, label: step.label, base64: shot, capturedAt: Date.now() }]);
+    setShots((prev) => [
+      ...prev,
+      { stepId: step.id, label: step.label, base64: shot, capturedAt: Date.now(), method: "live_camera" },
+    ]);
     if (isLastStep) {
       stop();
       goToPostCapturePhase();
     } else {
+      syncCameraForStep(config.steps[stepIndex + 1]);
       setStepIndex((i) => i + 1);
+    }
+  }
+
+  // Same-phone companion-app handoff: the seller already switched to a
+  // manufacturer app on THIS phone, took a native screenshot, and is now
+  // picking it from their own photo library — never a live capture, so
+  // this never touches the camera hook directly (syncCameraForStep only
+  // starts it if and when a later step actually needs it).
+  async function handleFileUpload(step: Extract<RunnerStep, { type: "file-upload" }>, file: File | undefined) {
+    if (!file) return;
+    setUploadError(null);
+    try {
+      const { base64 } = await resizeImageFile(file);
+      setShots((prev) => [
+        ...prev,
+        { stepId: step.id, label: step.label, base64, capturedAt: Date.now(), method: "screenshot_upload" },
+      ]);
+      if (isLastStep) {
+        stop();
+        goToPostCapturePhase();
+      } else {
+        syncCameraForStep(config.steps[stepIndex + 1]);
+        setStepIndex((i) => i + 1);
+      }
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Couldn't read that photo. Try picking it again.");
     }
   }
 
   function retake() {
     setShots([]);
     setProductPhoto(null);
+    setUploadError(null);
     setStepIndex(0);
     setBurstSubPhase("ready");
-    start();
+    if (stepNeedsCamera(config.steps[0])) start();
     setPhase("capture");
   }
 
@@ -279,6 +334,27 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
               </button>
             )}
           </>
+        ) : currentStep.type === "file-upload" ? (
+          <>
+            <p className="text-sm text-foreground/70">{currentStep.instructionText}</p>
+            <label className="block cursor-pointer">
+              {/* Native file input, same-phone companion-app handoff — the
+                  seller already screenshotted the manufacturer app on this
+                  phone and is picking that file, not photographing anything
+                  with TestPass's own camera. */}
+              <input
+                type="file"
+                accept="image/*"
+                className="peer sr-only"
+                onChange={(e) => handleFileUpload(currentStep, e.target.files?.[0])}
+              />
+              <div className="flex flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-card px-4 py-10 text-center peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-accent">
+                <p className="text-sm font-medium text-accent">{currentStep.pickerLabel}</p>
+                <p className="text-xs text-foreground/50">Choose the screenshot from your photos</p>
+              </div>
+            </label>
+            {uploadError && <p className="text-sm text-red-500">{uploadError}</p>}
+          </>
         ) : (
           <>
             <p className="text-sm text-foreground/70">{currentStep.instructionText(challenge)}</p>
@@ -305,7 +381,7 @@ export default function GuidedCaptureRunner({ sessionId, config }: { sessionId: 
   if (phase === "review" || phase === "submitting" || phase === "submit-error") {
     const singleShots = shots.filter((s) => {
       const step = config.steps.find((st) => st.id === s.stepId);
-      return step?.type === "single-capture";
+      return step?.type === "single-capture" || step?.type === "file-upload";
     });
     const burstShots = shots.filter((s) => {
       const step = config.steps.find((st) => st.id === s.stepId);
