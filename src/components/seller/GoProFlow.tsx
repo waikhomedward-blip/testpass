@@ -579,16 +579,27 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
         </ol>
         <p className="text-xs text-foreground/50">TestPass will collect: {config.dataCollected.join("; ")}.</p>
         {bleState === "unsupported" ? (
+          // CONFIRMED REAL-DEVICE FINDING (evidence-integrity close-out):
+          // the owner tested this path on a real iPhone — Bluetooth worked
+          // from a supported desktop browser but not from Safari/iOS, which
+          // doesn't expose Web Bluetooth at all (a platform gap, not a bug
+          // in this app). Per the Seller Minimum Equipment Principle, that
+          // is a capability-routing fact, not an error to report or a
+          // reason to send the seller off to install a different browser —
+          // this copy never names Safari/iOS or suggests a workaround, it
+          // just moves straight to the test that this phone can actually
+          // run. Do not restore the button below this branch.
           <>
+            <p className="text-sm font-medium">We&apos;ll test this GoPro with your camera</p>
             <p className="text-sm text-foreground/70">
-              Direct Bluetooth checks aren&apos;t available in this browser (common on iPhone/Safari) —
-              continuing with the photo check instead. One phone, no extra steps.
+              Direct Bluetooth checking isn&apos;t available on this phone, so TestPass will use visual evidence
+              instead.
             </p>
             <button
               onClick={skipBluetooth}
               className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90"
             >
-              Continue
+              Continue with camera test
             </button>
           </>
         ) : (
