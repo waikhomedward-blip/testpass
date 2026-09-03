@@ -21,6 +21,15 @@ export async function POST(req: NextRequest, ctx: RouteContext<"/api/checkout/[i
   if (!session || session.status !== "COMPLETED") {
     return NextResponse.redirect(new URL(`/buyer/session/${id}?checkout=unavailable`, req.url));
   }
+  // Chargeable-result gate (Section 14 of the beta operating directive):
+  // never charge for a result that doesn't really exist. INCONCLUSIVE
+  // because the evidence itself was weak is a real, chargeable result;
+  // INCONCLUSIVE standing in for TestPass's own evaluator infra failing is
+  // not. See supabase/add-launch-operating-fields.sql and
+  // recordEvidenceAndComplete in src/lib/db.ts.
+  if (session.evidence.some((ev) => ev.technical_error)) {
+    return NextResponse.redirect(new URL(`/buyer/session/${id}?checkout=technical_issue`, req.url));
+  }
   if (session.unlocked) {
     // Already unlocked (paywall off, or already paid) — nothing to charge
     // for. Send them straight back rather than creating a pointless
