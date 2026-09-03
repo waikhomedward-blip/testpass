@@ -260,7 +260,7 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
   }
 
   if (phase === "done") {
-    return <SubmittedScreen verdict={verdict} />;
+    return <SubmittedScreen verdict={verdict} sessionId={sessionId} />;
   }
 
   if (cameraState === "error" && (phase === "live-wide" || phase === "live-zoom")) {
