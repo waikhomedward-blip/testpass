@@ -52,6 +52,13 @@ export default function DigicamFlow({ sessionId }: { sessionId: string }) {
 
   function goToUpload() {
     setPhase("upload");
+    // Fire-and-forget instrumentation ping — the seller_started funnel event
+    // (see the /start route). This is the seller's first deliberate action
+    // past the instructions screen (they've already photographed the code
+    // with the camera under test and are now committing to upload it),
+    // mirroring the same "leave prepare/instructions" moment GuidedCaptureRunner
+    // pings from in beginCapture(). Never blocks or gates the flow.
+    fetch(`/api/sessions/${sessionId}/start`, { method: "POST" }).catch(() => {});
   }
 
   function retake() {

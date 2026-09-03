@@ -106,6 +106,14 @@ per-session via a `dedupe_key` unique index, so a page refresh, a status poll, o
 webhook can't inflate a funnel count. `error` events aren't deduped. Query `events` directly in the
 Supabase SQL editor for funnel counts — nothing here needs a dashboard.
 
+**Beta funnel measurement:** Preview and Production share one Supabase project (no separate staging
+database), so Preview testing writes into the same tables the private-beta numbers come from.
+`sessions.environment` (see `supabase/add-environment-marker.sql`) is set server-side from Vercel's
+own `VERCEL_ENV` at session creation — never client-supplied. `events` doesn't carry its own copy;
+join on `session_id` to filter. The correct beta-baseline query is `where environment = 'production'`
+— this also excludes rows created before the column existed (they're `NULL`, not `'production'`),
+so no manual backfill or classification of old rows is needed.
+
 ## Data retention
 
 Submitted photos go to the private `captures` Supabase Storage bucket, scoped by session id.

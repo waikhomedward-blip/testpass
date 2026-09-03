@@ -75,6 +75,7 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
 
   async function connectBluetooth() {
     setPhase("bluetooth-connecting");
+    pingStarted();
     const nav = navigator as Navigator & { bluetooth?: BluetoothApi };
     if (!nav.bluetooth) {
       setBt({ ...EMPTY_BT, attempted: true, note: "Web Bluetooth isn't supported in this browser." });
@@ -135,6 +136,18 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
   function skipBluetooth() {
     setBt({ ...EMPTY_BT, attempted: true, note: "Seller skipped the Bluetooth step." });
     setPhase("camera-instructions");
+    pingStarted();
+  }
+
+  // Fire-and-forget instrumentation ping — the seller_started funnel event
+  // (see the /start route). Called from both connectBluetooth() and
+  // skipBluetooth(): either one is the seller's first deliberate action past
+  // the instructions screen, mirroring the same "leave prepare/instructions"
+  // moment GuidedCaptureRunner pings from in beginCapture(). Deduped
+  // server-side (once: true), so it's harmless that only one of these two
+  // paths runs per session. Never blocks or gates the flow.
+  function pingStarted() {
+    fetch(`/api/sessions/${sessionId}/start`, { method: "POST" }).catch(() => {});
   }
 
   function captureFrame() {

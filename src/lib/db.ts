@@ -42,6 +42,12 @@ export async function createSession(input: {
     // creation time regardless. See the beta-readiness audit's second
     // paywall finding.
     unlocked: !PAYWALL_ENABLED,
+    // Set once, server-side, from Vercel's own system env var — never
+    // trusts anything the client sends. Preview and Production share one
+    // Supabase project (no separate staging DB), so this is what lets a
+    // beta funnel query say `where environment = 'production'` and
+    // actually mean it. See supabase/add-environment-marker.sql.
+    environment: process.env.VERCEL_ENV ?? "development",
   });
 
   if (error) throw error;

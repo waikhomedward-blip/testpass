@@ -50,6 +50,11 @@ export interface TestSession {
   unlocked: boolean;
   stripe_checkout_session_id: string | null;
   stripe_payment_intent_id: string | null;
+  // Server-derived from Vercel's VERCEL_ENV at creation time (see
+  // createSession in src/lib/db.ts) — never client-supplied. "production" |
+  // "preview" | "development" | null (rows created before this column
+  // existed). See supabase/add-environment-marker.sql for why this exists.
+  environment: string | null;
 }
 
 // One row per funnel/error event — see supabase/add-beta-readiness.sql
