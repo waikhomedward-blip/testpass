@@ -18,8 +18,21 @@ export type CameraState = "idle" | "starting" | "live" | "error";
 // on the live camera state, which only runs after the <video> element is
 // actually in the DOM — correct whether this is the first activation or a
 // retake.
+//
+// CAPTURE CORRECTION PRINCIPLE follow-on fix: every "preview the shot,
+// then Retake/Use" confirm screen (GuidedCaptureRunner, ProductPhotoStage,
+// GoProFlow's status-photo step) swaps the live <video> out of the tree for
+// a captured-frame <img> and back again, without ever calling stop() —
+// the whole point is that Retake doesn't restart the camera. But `state`
+// never changes across that round trip (the stream stays "live" the whole
+// time), so the effect above never re-fires on its own, and a plain object
+// ref doesn't notice a brand-new <video> DOM node mounting in the old one's
+// place — it would just sit there with no srcObject, silently black, and
+// `videoReady` would never flip back on since `onPlaying` can't fire.
+// `videoRef` is exported as a CALLBACK ref instead so reattachment happens
+// the instant React mounts (or remounts) the node, independent of `state`.
 export function useCamera() {
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoNodeRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [state, setState] = useState<CameraState>("idle");
@@ -29,16 +42,31 @@ export function useCamera() {
     return () => streamRef.current?.getTracks().forEach((t) => t.stop());
   }, []);
 
+  const attachStream = useCallback(() => {
+    const video = videoNodeRef.current;
+    const stream = streamRef.current;
+    if (!video || !stream || video.srcObject === stream) return;
+    video.srcObject = stream;
+    video.play().catch(() => {
+      /* autoplay can reject on some browsers until a user gesture — the
+         gesture that started the camera already happened, so this is
+         usually a no-op guard, not a real failure. */
+    });
+  }, []);
+
+  // Covers first activation: the stream can resolve after the <video> is
+  // already mounted, so this catches that ordering too.
   useEffect(() => {
-    if (state === "live" && videoRef.current && streamRef.current) {
-      videoRef.current.srcObject = streamRef.current;
-      videoRef.current.play().catch(() => {
-        /* autoplay can reject on some browsers until a user gesture — the
-           gesture that started the camera already happened, so this is
-           usually a no-op guard, not a real failure. */
-      });
-    }
-  }, [state]);
+    if (state === "live") attachStream();
+  }, [state, attachStream]);
+
+  const videoRef = useCallback(
+    (node: HTMLVideoElement | null) => {
+      videoNodeRef.current = node;
+      if (node) attachStream();
+    },
+    [attachStream]
+  );
 
   const start = useCallback(async () => {
     setVideoReady(false);
@@ -63,7 +91,7 @@ export function useCamera() {
   }, []);
 
   const capture = useCallback((quality = 0.85): string | null => {
-    const video = videoRef.current;
+    const video = videoNodeRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return null;
     canvas.width = video.videoWidth || 1280;
