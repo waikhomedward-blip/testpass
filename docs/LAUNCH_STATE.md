@@ -32,8 +32,9 @@ the owner's behalf).
 
 ## Release
 
-Release hash: _fill in the merge commit SHA once the current launch-readiness branch is
-merged to `main` and deployed to Production._
+Release hash: `5d86947` (merge of PR #4, "Beta launch operating system: paywall integrity,
+funnel, feedback, docs" — deployed to Production 2026-09-04). Update this line on every
+subsequent Production deploy.
 
 ## Paywall
 
@@ -71,7 +72,7 @@ payment_completed`.
 
 ## Current beta phase
 
-Pre-launch — code and schema changes for the launch-readiness wave are complete and verified
-locally (lint + build pass); not yet merged to `main` or deployed to Production. Launch cannot
-be declared "live" for real paid transactions until the domain and Stripe activation items
-above are resolved by the owner.
+Pre-launch — the launch-readiness wave (release `5d86947`) is merged to `main` and deployed to
+Production. Launch still cannot be declared "live" for real paid transactions until the domain
+and Stripe activation items above are resolved by the owner; everything else on the launch
+decision gate is clean.
