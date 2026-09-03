@@ -10,6 +10,19 @@ import GuidedCaptureRunner from "./GuidedCaptureRunner";
 // now same-phone screenshot handoffs: the seller casts and screenshots on
 // the one phone also running TestPass, then picks those files here. No
 // challenge code — there's nothing to hold up in a photo anymore.
+//
+// Round 2 (physical-feasibility + error-recovery audit): copy tightened to
+// always say "take a screenshot on this phone" for the two cast steps and
+// "TestPass's own camera" / "live photo" for the aircraft-equivalent final
+// step, matching the same DJI fix — the mechanic was already right, the
+// wording didn't make the mode switch (screenshot vs. live camera)
+// unmistakable. Also found and fixed in primitives.ts: this category's
+// evaluationPromptSystem never appended PRODUCT_PHOTO_ADDENDUM even though
+// includeProductPhoto is true here, meaning the evaluator model was
+// silently handed a third image (the live headset photo) with zero
+// instruction about what it was or that it must not affect the verdict —
+// a real evidence-semantics gap the re-audit was specifically meant to
+// catch (Xbox had the identical bug; both are fixed now).
 const runnerConfig: RunnerConfig = {
   category: "quest",
   filenamePrefix: "quest",
@@ -27,7 +40,7 @@ const runnerConfig: RunnerConfig = {
       id: "device-info",
       label: "Device info",
       instructionText:
-        "With the headset cast to this phone via the Meta Horizon app, go to Settings → System → Device Info in the headset so the cast shows the serial number, then screenshot this phone's cast view and choose that screenshot below.",
+        "With the headset cast to this phone via the Meta Horizon app, go to Settings → System → Device Info in the headset so the cast shows the serial number. Take a screenshot on this phone (your phone's own screenshot function, not TestPass's camera) of that cast view, then choose it below.",
       pickerLabel: "Choose Device Info screenshot",
     },
     {
@@ -35,7 +48,7 @@ const runnerConfig: RunnerConfig = {
       id: "store-access",
       label: "Store access",
       instructionText:
-        "Still casting, open the Meta Quest Store in the headset and wait for real content to load. Screenshot the cast, then choose it below.",
+        "Still casting, open the Meta Quest Store in the headset and wait for real content to load. Take a screenshot on this phone, then choose it below.",
       pickerLabel: "Choose Store screenshot",
     },
   ],

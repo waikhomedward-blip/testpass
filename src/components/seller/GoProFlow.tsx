@@ -259,6 +259,7 @@ function parseBatteryPercentage(payload: Uint8Array): number | null {
 type Phase =
   | "instructions"
   | "bluetooth-connecting"
+  | "bluetooth-result"
   | "camera-instructions"
   | "camera-ready"
   | "product-photo"
@@ -313,6 +314,7 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
   const [bleState, setBleState] = useState<BleState>("idle");
   const [bt, setBt] = useState<BluetoothResult>(EMPTY_BT);
   const [frame, setFrame] = useState<string | null>(null);
+  const [pendingFrame, setPendingFrame] = useState<string | null>(null);
   const [productPhoto, setProductPhoto] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [verdict, setVerdict] = useState<string | null>(null);
@@ -347,6 +349,11 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
     pingStarted();
     const nav = navigator as Navigator & { bluetooth?: BluetoothApi };
     if (!nav.bluetooth) {
+      // Nothing to retry here — the "Connect via Bluetooth" button is
+      // already hidden behind bleState === "unsupported" upfront (see the
+      // instructions screen), so reaching this branch at all would mean
+      // Web Bluetooth vanished mid-session. No recovery choice makes sense;
+      // go straight to the photo path.
       setBleState("unsupported");
       setBt({ ...EMPTY_BT, attempted: true, note: "Web Bluetooth isn't supported in this browser." });
       setPhase("camera-instructions");
@@ -369,6 +376,12 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
         optionalServices: [GOPRO_SERVICE_UUID],
       });
     } catch (err) {
+      // CAPTURE CORRECTION PRINCIPLE / "never force a failed direct path
+      // into fallback with no recovery option": a cancelled picker isn't
+      // necessarily "I want the photo test instead" — it's often "I picked
+      // the wrong moment" or "I need a second to turn Bluetooth on." Route
+      // to bluetooth-result so the seller explicitly chooses Try again vs.
+      // Use photo test, instead of silently landing in the photo flow.
       setBleState("cancelled");
       setBt({
         ...EMPTY_BT,
@@ -378,7 +391,7 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
             ? "No GoPro was found nearby, or the picker was cancelled."
             : "The Bluetooth picker was cancelled.",
       });
-      setPhase("camera-instructions");
+      setPhase("bluetooth-result");
       return;
     }
 
@@ -451,7 +464,20 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
         note: "Connected to Bluetooth, but TestPass couldn't complete a direct camera read — continuing with the photo test.",
       });
     }
-    setPhase("camera-instructions");
+    // Either branch above lands here needing a seller decision, not an
+    // auto-advance: on success, "is this the right GoPro?"; on failure,
+    // "try again or use the photo test?" — see the bluetooth-result phase.
+    setPhase("bluetooth-result");
+  }
+
+  // Used both for "Connect a different device" (after a successful read the
+  // seller doesn't want) and "Try Bluetooth again" (after a failed/
+  // cancelled attempt) — both mean the same thing: discard whatever
+  // Bluetooth result is on hand and reopen the device picker.
+  function retryBluetooth() {
+    setBt(EMPTY_BT);
+    setBleState("idle");
+    connectBluetooth();
   }
 
   function skipBluetooth() {
@@ -471,18 +497,40 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
     fetch(`/api/sessions/${sessionId}/start`, { method: "POST" }).catch(() => {});
   }
 
+  // CAPTURE CORRECTION PRINCIPLE: stage the shot instead of committing it
+  // immediately. capture() only grabs a canvas frame from the still-live
+  // video — it doesn't stop the stream — so the seller can Retake without
+  // any camera restart, same as the shared GuidedCaptureRunner.
   function captureFrame() {
     const shot = capture(0.85);
     if (!shot) return;
-    setFrame(shot);
+    setPendingFrame(shot);
+  }
+
+  function confirmFrame(action: "retake" | "use") {
+    if (action === "retake") {
+      setPendingFrame(null);
+      return;
+    }
+    setFrame(pendingFrame);
+    setPendingFrame(null);
     stop();
     setPhase("product-photo");
   }
 
+  // Review screen's "retake status photo" — independent of the product
+  // photo, which has its own edit path (retakeProductPhoto below), per the
+  // "each independently meaningful capture gets its own Replace control"
+  // rule.
   function retake() {
     setFrame(null);
+    setPendingFrame(null);
     start();
     setPhase("camera-ready");
+  }
+
+  function retakeProductPhoto() {
+    setPhase("product-photo");
   }
 
   async function submit() {
@@ -570,6 +618,64 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
     return <p className="text-center text-sm text-foreground/60">{message}</p>;
   }
 
+  // CAPTURE CORRECTION PRINCIPLE for Bluetooth/telemetry: a direct BLE
+  // read is either a real success worth confirming (show enough to
+  // recognize the device, let the seller reject a wrong one) or a failure
+  // that deserves an actual choice — never a silent, un-appealable drop
+  // into the photo fallback.
+  if (phase === "bluetooth-result") {
+    const success = bt.evidenceMethod === "direct_ble";
+    return (
+      <div className="space-y-4">
+        <StepIndicator steps={STEPS} current={0} />
+        {success ? (
+          <>
+            <p className="text-sm font-medium text-accent">
+              GoPro connected{bt.model ? ` — ${bt.model}` : ""}
+              {bt.batteryLevel !== null ? `, battery ${bt.batteryLevel}%` : ""}.
+            </p>
+            <p className="text-sm text-foreground/70">
+              TestPass read this directly from the camera over Bluetooth — no photo needed for this part. Is this
+              the right GoPro?
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={retryBluetooth}
+                className="flex-1 rounded-lg border border-border py-2.5 text-sm font-medium hover:bg-foreground/5"
+              >
+                Connect a different device
+              </button>
+              <button
+                onClick={() => setPhase("camera-instructions")}
+                className="flex-1 rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90"
+              >
+                Use this GoPro
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-foreground/70">{bt.note}</p>
+            <div className="flex gap-2">
+              <button
+                onClick={retryBluetooth}
+                className="flex-1 rounded-lg border border-border py-2.5 text-sm font-medium hover:bg-foreground/5"
+              >
+                Try Bluetooth again
+              </button>
+              <button
+                onClick={() => setPhase("camera-instructions")}
+                className="flex-1 rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90"
+              >
+                Use photo test
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
   if (phase === "camera-instructions") {
     return (
       <div className="space-y-4">
@@ -635,24 +741,49 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
     <div className="space-y-4">
       <StepIndicator steps={STEPS} current={stepIndex} />
 
-      {phase === "camera-ready" && (
-        <CameraStage
-          videoRef={videoRef}
-          state={cameraState}
-          videoReady={videoReady}
-          onVideoReady={() => setVideoReady(true)}
-        />
+      {phase === "camera-ready" && !pendingFrame && (
+        <>
+          <CameraStage
+            videoRef={videoRef}
+            state={cameraState}
+            videoReady={videoReady}
+            onVideoReady={() => setVideoReady(true)}
+          />
+          <button
+            onClick={captureFrame}
+            disabled={!videoReady}
+            className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40"
+          >
+            Capture photo
+          </button>
+        </>
       )}
       <canvas ref={canvasRef} className="hidden" />
 
-      {phase === "camera-ready" && (
-        <button
-          onClick={captureFrame}
-          disabled={!videoReady}
-          className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90 disabled:opacity-40"
-        >
-          Capture photo
-        </button>
+      {phase === "camera-ready" && pendingFrame && (
+        <div className="space-y-4">
+          <p className="text-sm text-foreground/70">Can you clearly read the GoPro&apos;s battery and storage status?</p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`data:image/jpeg;base64,${pendingFrame}`}
+            alt="captured status screen"
+            className="aspect-video w-full rounded-lg object-cover"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={() => confirmFrame("retake")}
+              className="flex-1 rounded-lg border border-border py-2.5 text-sm font-medium hover:bg-foreground/5"
+            >
+              Retake
+            </button>
+            <button
+              onClick={() => confirmFrame("use")}
+              className="flex-1 rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90"
+            >
+              Use photo
+            </button>
+          </div>
+        </div>
       )}
 
       {phase === "review" && (
@@ -662,6 +793,9 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
               <p className="mb-2 text-xs font-medium text-foreground/50">Status screen</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`data:image/jpeg;base64,${frame}`} alt="captured status screen" className="aspect-video w-full rounded-lg object-cover" />
+              <button onClick={retake} className="mt-1.5 text-xs font-medium text-accent hover:underline">
+                Retake status photo
+              </button>
             </div>
           )}
           {productPhoto && (
@@ -669,19 +803,17 @@ export default function GoProFlow({ sessionId }: { sessionId: string }) {
               <p className="mb-2 text-xs font-medium text-foreground/50">Photo of the device</p>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`data:image/jpeg;base64,${productPhoto}`} alt="GoPro" className="aspect-video w-full rounded-lg object-cover" />
+              <button onClick={retakeProductPhoto} className="mt-1.5 text-xs font-medium text-accent hover:underline">
+                Retake device photo
+              </button>
             </div>
           )}
-          <div className="flex gap-2">
-            <button onClick={retake} className="flex-1 rounded-lg border border-border py-2 text-sm font-medium">
-              Retake
-            </button>
-            <button
-              onClick={submit}
-              className="flex-1 rounded-lg bg-accent py-2 text-sm font-medium text-white hover:opacity-90"
-            >
-              Submit
-            </button>
-          </div>
+          <button
+            onClick={submit}
+            className="w-full rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90"
+          >
+            Submit
+          </button>
         </div>
       )}
 

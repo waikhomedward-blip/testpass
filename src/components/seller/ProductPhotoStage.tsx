@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useCamera } from "./useCamera";
 import CameraStage from "./CameraStage";
 
@@ -11,6 +12,13 @@ import CameraStage from "./CameraStage";
 // than reused listing photos. TestPass is honest about that weight in the
 // evaluator prompt (see PRODUCT_PHOTO_ADDENDUM in primitives.ts) — this
 // step never changes a functional verdict, only adds an optional note.
+//
+// CAPTURE CORRECTION PRINCIPLE: this is the last capture the seller makes
+// before submitting, so it's an easy place to auto-advance straight past a
+// blurry or badly-framed shot. It doesn't — capture() only grabs a frame
+// from the still-live video (useCamera never stops the stream on capture),
+// so the seller sees exactly what was captured and can Retake it, with no
+// camera restart, before it ever reaches onCaptured.
 export default function ProductPhotoStage({
   deviceLabel,
   onCaptured,
@@ -21,12 +29,22 @@ export default function ProductPhotoStage({
   onSkip?: () => void;
 }) {
   const { videoRef, canvasRef, state, videoReady, setVideoReady, start, stop, capture } = useCamera();
+  const [pendingShot, setPendingShot] = useState<string | null>(null);
 
   function handleCapture() {
     const shot = capture(0.85);
     if (!shot) return;
+    setPendingShot(shot);
+  }
+
+  function retake() {
+    setPendingShot(null);
+  }
+
+  function usePhoto() {
+    if (!pendingShot) return;
     stop();
-    onCaptured(shot);
+    onCaptured(pendingShot);
   }
 
   if (state === "idle") {
@@ -63,6 +81,30 @@ export default function ProductPhotoStage({
             Skip this step
           </button>
         )}
+      </div>
+    );
+  }
+
+  if (pendingShot) {
+    return (
+      <div className="space-y-4">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={pendingShot} alt={`Captured photo of the ${deviceLabel}`} className="w-full rounded-lg border border-border" />
+        <p className="text-sm text-foreground/70">Is the whole {deviceLabel} clearly visible?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={retake}
+            className="flex-1 rounded-lg border border-border py-2.5 text-sm font-medium hover:bg-foreground/5"
+          >
+            Retake
+          </button>
+          <button
+            onClick={usePhoto}
+            className="flex-1 rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:opacity-90"
+          >
+            Use photo
+          </button>
+        </div>
       </div>
     );
   }

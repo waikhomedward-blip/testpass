@@ -13,7 +13,7 @@ export default function CameraStage({
   onVideoReady,
   overlay,
 }: {
-  videoRef: React.RefObject<HTMLVideoElement | null>;
+  videoRef: React.Ref<HTMLVideoElement>;
   state: CameraState;
   videoReady: boolean;
   onVideoReady: () => void;
