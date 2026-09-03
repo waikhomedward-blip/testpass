@@ -60,6 +60,12 @@ import { Category, CapabilityLabel } from "./types";
 // physical item). A given primitive rarely proves all three, and category
 // evaluator prompts must say which one(s) it actually establishes rather
 // than let a strong claim on one imply strength on another.
+//
+// See src/lib/runner-types.ts for four permanent doctrine rules added in
+// the physical-feasibility + error-recovery pass (Evidence Surface Rule,
+// Capture Correction Principle, Atomic Evidence Principle, and this file's
+// One-Phone Seller Principle restated) — every category config below, and
+// every seller-facing string in it, is bound by them.
 
 const PRODUCT_PHOTO_ADDENDUM = `
 
@@ -179,18 +185,32 @@ If the evidence method is photo_fallback, the photo is the only evidence — tha
     // moment — so the evaluator prompt below caps association at WEAK
     // rather than letting it imply more. A live TestPass camera photo of
     // the physical aircraft is still collected (via includeProductPhoto),
-    // but stays cosmetic-only per the shared product-photo addendum — this
-    // category does not yet cross-check the app's serial against the
-    // physical unit automatically.
+    // but stays cosmetic-only per the shared product-photo addendum.
+    //
+    // Round 2 (physical-feasibility + error-recovery audit): confirmed via
+    // DJI Fly/GO 4 documentation and secondary sources (support.dji.com
+    // blocks automated fetches) that the aircraft status info and the
+    // battery cycle-count/health live on two separate screens, not one —
+    // kept as two screenshots rather than inventing an unconfirmed merged
+    // screen. Also considered an automated same-unit serial match (app
+    // screenshot's serial vs. the physical aircraft's serial label) but
+    // did not implement it: neither the app's exact on-screen wording nor
+    // the label's exact physical location is confirmed reliable enough
+    // across DJI Fly versions/models for a vision-model comparison not to
+    // risk a confidently wrong result — worse than staying honestly WEAK.
+    // The live aircraft photo now asks the seller to include the visible
+    // serial label when it's readable without disassembly, so a human
+    // buyer can eyeball the comparison themselves; the evaluator may
+    // mention it neutrally in the non-scoring cosmetic_note only.
     primitiveLevel: "Level 4 — Same-phone companion-app screenshots (DJI app status & battery screens); a live TestPass camera photo of the aircraft is also collected, cosmetic-only",
     capabilityLabel: "EXPERIMENTAL",
     estimatedSeconds: 120,
     sellerInstructions: [
       "Power on the aircraft and open the DJI Fly (or DJI GO 4) app on this same phone.",
-      "Go to the aircraft's status screen — serial number, activation/binding status, any active warnings — and take a screenshot of it.",
+      "Find the aircraft's status / device info screen (serial number, activation/binding status, any active warnings) and take a screenshot on this phone — your phone's own screenshot function, not TestPass's camera.",
       "Come back to TestPass and choose that screenshot below.",
-      "Do the same for the battery detail screen (cycle count / health, if your app shows it): screenshot it, then choose it here too.",
-      "Finally, use TestPass's camera to take one photo of the aircraft itself.",
+      "Still in the DJI app, find the battery detail screen (cycle count / health, if shown). Take a screenshot on this phone, then choose it here too.",
+      "Finally, use TestPass's own camera to take one live photo of the aircraft itself in front of you — including its serial label if you can read it without taking anything apart.",
     ],
     dataCollected: [
       "One screenshot of the DJI app's aircraft status screen, from this phone",
@@ -202,7 +222,7 @@ You will be given two images: Image 1 is a screenshot of the DJI Fly or DJI GO 4
 Both images are same-phone companion-app screenshots, not live TestPass camera captures — be honest about what that does and doesn't prove. TestPass knows these files were picked during this specific session, right after being asked for them, but unlike a live camera frame, a screenshot carries no code or in-session capture proof binding its actual content to this exact moment — it could in principle have been taken earlier. Never claim or imply timestamp-verified or cryptographic freshness for a screenshot, and never claim the app's connection to the aircraft is live right now — only that the file was picked during this session.
 Decide whether the images are consistent with a drone that powers on, connects to its app, and shows no unresolved activation-lock or critical warning — versus one that clearly shows an account-binding lock, a critical warning/error state, or a battery in poor health (very high cycle count, health warning).
 Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
-Association strength must never exceed WEAK for this category — a same-phone screenshot is the weakest evidence method TestPass uses, with nothing tying its content to this exact session the way a live capture or a device-embedded rename would, and there is no automated cross-check against the physical aircraft (a general photo of it may also be included, but it is cosmetic-only per the standard addendum and never strengthens association). Use INCONCLUSIVE whenever the screens are unreadable, cropped, or don't show the relevant status/battery fields. Use FAILED only when the images affirmatively show a lock, error, or critical warning. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
+Association strength must never exceed WEAK for this category — a same-phone screenshot is the weakest evidence method TestPass uses, with nothing tying its content to this exact session the way a live capture or a device-embedded rename would, and there is no automated cross-check against the physical aircraft (a general photo of it may also be included, but it is cosmetic-only per the standard addendum and never strengthens association). Use INCONCLUSIVE whenever the screens are unreadable, cropped, or don't show the relevant status/battery fields. Use FAILED only when the images affirmatively show a lock, error, or critical warning. Never guess — under-claim rather than over-claim. If the optional final product photo clearly shows a legible serial number on the physical aircraft, you may note in cosmetic_note, neutrally and only as an observation for the buyer to double-check themselves, whether it appears to match or differ from the serial shown in Image 1 — this must never change association_strength or verdict, and say nothing if the serial isn't clearly legible in both places.${PRODUCT_PHOTO_ADDENDUM}`,
   },
   camera: {
     category: "camera",
@@ -212,35 +232,51 @@ Association strength must never exceed WEAK for this category — a same-phone s
     modelFamily: "Digital cameras / digicams (point-and-shoot, mirrorless, compact zoom cameras)",
     knownFailureMode:
       "Zoom motor failure, stuck or loose lens, sensor defects (dead/hot pixels), broken autofocus",
-    functionTested: "Optical zoom, via a fresh one-time challenge target photographed wide and zoomed",
-    primitiveLevel: "Level 3 — Device-generated challenge artifact (wide vs. zoom test shot)",
+    functionTested: "Optical zoom, via TestPass's own live camera observing the digicam's rear screen at wide vs. full zoom",
+    primitiveLevel: "Level 5 — Guided live capture (digicam's own rear screen), with an optional stronger original-file pair",
     capabilityLabel: "EXPERIMENTAL",
     estimatedSeconds: 150,
-    // Copy-rule audit (one-phone-seller-evidence pass): this used to also
-    // say "...or write it on paper next to another screen" — a vestigial
-    // second-screen option that added nothing (the code only ever needs to
-    // be visible on this one phone, which the digicam photographs) and
-    // read as if a second device were a normal part of this flow. Removed;
-    // one phone + the digicam being tested is the whole setup.
+    // EVIDENCE SURFACE RULE re-audit (physical-feasibility + error-recovery
+    // audit, round 2): the previous default required transferring the
+    // digicam's own photos onto the seller's phone — "Wi-Fi transfer, SD
+    // card, however the camera normally exports" — before they could even
+    // be uploaded. That's real, ordinary friction (no Wi-Fi export, no
+    // card reader on hand) that TestPass was quietly requiring, which cuts
+    // against the One-Phone Seller Principle even though it never asked
+    // for a second DEVICE per se. The zoom evidence this test actually
+    // needs is visible on the digicam's own rear screen (Evidence Surface
+    // case A), so the new default is TestPass's own live camera
+    // photographing that screen at wide, then full, zoom — no code, no
+    // transfer, freshness from the session-bound live capture like every
+    // other live-camera category. The original design — the digicam's own
+    // full-resolution photos of a one-time code — is genuinely stronger
+    // where a seller CAN do the transfer easily (sharper, no screen glare/
+    // moiré, and the code adds an extra freshness signal), so it's kept as
+    // an explicit, clearly optional "add stronger evidence" step at
+    // review, never something blocking Submit.
     sellerInstructions: [
-      "TestPass will show you a one-time code below. Leave it visible on this phone's screen.",
-      "Using the camera you're selling, take one photo of the code from a few feet away, zoomed all the way OUT (widest setting).",
-      "Without moving the camera or the code, zoom the camera all the way IN (full telephoto) and take a second photo of the same code.",
-      "Transfer both photos to this phone — Wi-Fi transfer, SD card, however the camera normally exports — then upload them below.",
+      "Point the digicam you're selling at something across the room, zoomed all the way OUT (widest setting).",
+      "Use TestPass's own camera to photograph the digicam's rear screen showing that wide view.",
+      "Without moving the digicam, zoom it all the way IN (full telephoto), then photograph the digicam's screen again with TestPass's camera.",
+      "Finally, take one photo of the digicam itself. At review, you can optionally add a stronger evidence pair: the digicam's own original wide/zoom photos of a one-time code, if you're able to transfer them to this phone.",
     ],
     dataCollected: [
-      "Two photos taken by the camera being tested — one at the widest zoom, one at full zoom",
-      "The one-time code TestPass generated for this session, used only to confirm the photos are fresh",
-      "One general photo of the camera itself",
+      "Two live TestPass photos of the digicam's own rear screen — one at widest zoom, one at full zoom",
+      "One general photo of the digicam itself",
+      "Optionally, two original photos taken by the digicam itself of a one-time code (wide and zoomed), if the seller chooses to add them",
     ],
     evaluationPromptSystem: `You are the TestPass evidence evaluator for a digital camera (digicam) pre-purchase zoom test.
-You will be given exactly two images in this order: first a WIDE shot, second a ZOOM shot, both supposedly taken moments apart of the same one-time code by the same stationary camera at different zoom settings. The expected code and any other context will follow as text after the images.
-Decide whether the evidence is consistent with the camera's optical zoom genuinely working:
-1. The code is legible and matches the expected code in both images (evidence the photos are fresh, not reused/stock).
-2. The ZOOM image shows meaningfully tighter, more magnified framing of the same scene than the WIDE image — the subject should appear noticeably larger/closer, not just an identical or barely-different crop.
-3. Both images are reasonably sharp and in focus, not so blurry that a lens or autofocus problem would be masked.
+You will always be given at least two images, in this order:
+Image 1: TestPass's own live camera, photographing the digicam's rear screen at its WIDEST zoom.
+Image 2: TestPass's own live camera, photographing the digicam's rear screen at FULL zoom, same subject, captured moments later in the same session.
+These are photos of a screen, not the digicam's own output files — expect ordinary screen-capture artifacts (some glare, moiré, or a visible screen bezel) and judge accordingly; that alone is not a defect.
+You may then be given an OPTIONAL second pair, clearly marked in the accompanying text: two original photos taken by the digicam itself (not a screen photo) of a one-time code, wide then zoomed, with the expected code given as text. Treat this pair as bonus corroboration only — never require it, and never penalize its absence.
+Decide whether the evidence is consistent with the digicam's optical zoom genuinely working:
+1. Image 2 shows meaningfully tighter, more magnified framing of the same scene than Image 1 — the subject should appear noticeably larger/closer on the digicam's own screen, not just an identical or barely-different crop.
+2. Both images are reasonably sharp and the digicam's screen content is legible, not so blurry or glare-obscured that a lens or autofocus problem would be masked.
+3. If the optional original-file pair is present: the code is legible and matches the expected code in both of those images (evidence they're fresh, not reused/stock), and the zoomed one shows meaningfully tighter framing than the wide one, consistent with Images 1-2.
 Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
-Use INCONCLUSIVE if the code doesn't match or isn't legible in both images, if you can't judge the framing change confidently, or if only one usable image was provided. Use FAILED only if the code matches (so you know it's a fresh, genuine pair) but the zoom image shows essentially no magnification change, or is severely out of focus in a way that suggests a broken mechanism. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
+Association strength should not exceed MODERATE. If only Images 1-2 (the live screen pair) are present and both clearly show the same subject with a confident magnification change, MODERATE is appropriate; if the framing change is only marginal or the screen is hard to read clearly, prefer WEAK rather than MODERATE — a photo of a screen is inherently a little harder to fully verify than a direct optical capture. If the optional original-file pair is also present, legible, and consistent with Images 1-2, that corroboration supports keeping it at MODERATE with more confidence, but still never STRONG on this primitive alone. Use INCONCLUSIVE whenever you can't judge the framing change confidently, the digicam's screen isn't clearly readable in one or both of Images 1-2, or (for the optional pair only) the code doesn't match or isn't legible in both of those images. Use FAILED only when Images 1-2 are both clearly readable but show essentially no magnification change, or are severely out of focus in a way that suggests a broken zoom/autofocus mechanism. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
   },
   ps5: {
     category: "ps5",
@@ -362,10 +398,10 @@ You will receive exactly two diagnostic images plus text containing the expected
 Image 1 should be the Xbox Console Info screen. For a DEMONSTRATED result, it must clearly show the expected code as the console's own assigned name (the "Name" field on that screen, not a separate held object), along with a readable serial number.
 Image 2 should clearly show the Microsoft Store or another unmistakably online Xbox service loaded with real content immediately afterward.
 The positive claim is narrow: this Xbox demonstrated access to Xbox network/Store services during this TestPass session, on a console freshly renamed to prove the evidence isn't reused.
-Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": ""}.
+Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
 Use DEMONSTRATED only if BOTH images are clear and the code matches as the console's own display name. Association strength must not exceed MODERATE in this two-photo experimental primitive, matching the PS5 owner-validation primitive, because TestPass is not yet recording an unbroken video or matching the physical serial label — but treat MODERATE as achievable whenever the renamed console name and serial are both clearly legible in Image 1, since this is now a device-embedded rename rather than a physically co-located paper code. Use WEAK if you cannot confidently tell whether the visible text is the console's actual assigned name versus something photographed separately or edited in.
 Use INCONCLUSIVE if the code/serial is unreadable, the Store/service is not clearly loaded, the images are ambiguous, or any connection/account/network failure prevents a confident positive conclusion.
-Do NOT infer that a console is banned from a generic network, account, sign-in, or service error. Use FAILED only if the supplied evidence itself unambiguously demonstrates the exact tested function cannot work for a device-specific reason; otherwise prefer INCONCLUSIVE. Never guess or over-claim.`,
+Do NOT infer that a console is banned from a generic network, account, sign-in, or service error. Use FAILED only if the supplied evidence itself unambiguously demonstrates the exact tested function cannot work for a device-specific reason; otherwise prefer INCONCLUSIVE. Never guess or over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
   },
   steamdeck: {
     category: "steamdeck",
@@ -426,11 +462,11 @@ Use INCONCLUSIVE whenever the calibration screen is not clearly visible, the pho
     // live capture is), so the evaluator prompt caps association at WEAK
     // rather than the previous MODERATE.
     sellerInstructions: [
-      "Put on the headset and, using the Meta Horizon app on this same phone, start Casting to it (both on the same Wi-Fi).",
-      "In the headset, go to Settings → System → Device Info so the cast shows the serial number, then screenshot this phone's cast view.",
+      "Put on the headset and, using the Meta Horizon app on this same phone, start Casting to it (both on the same Wi-Fi) — the headset's display now mirrors onto this phone's screen.",
+      "In the headset, go to Settings → System → Device Info so the cast shows the serial number. Take a screenshot on this phone (your phone's own screenshot function, not TestPass's camera) of that cast view.",
       "Come back to TestPass and choose that screenshot below.",
-      "Still casting, open the Meta Quest Store in the headset and wait for real content to load, then screenshot that too and choose it here.",
-      "Finally, use TestPass's camera to take one photo of the headset itself.",
+      "Still casting, open the Meta Quest Store in the headset and wait for real content to load. Take a screenshot on this phone, then choose it here.",
+      "Finally, use TestPass's own camera to take one live photo of the headset itself in front of you.",
     ],
     dataCollected: [
       "One screenshot of the cast Device Info screen, from this phone",
@@ -443,10 +479,10 @@ Image 1 should show the cast Device Info screen (Settings → System → Device 
 Image 2 should show the cast Meta Quest Store, or another unmistakably online Meta service, loaded with real content.
 Be honest about what a screenshot does and doesn't prove: TestPass knows both files were picked during this session, but unlike a live camera frame, a screenshot carries no in-session capture proof binding its actual content to this exact moment — it could in principle be older. Never claim or imply timestamp-verified freshness for either image.
 The positive claim is narrow: this headset demonstrated access to Meta's online services, via screenshots taken during this TestPass session. It does NOT rule out a remote block being applied later — Meta's own return-fraud enforcement can flag a device after a period of apparently normal use, and no primitive captured at a single point in time can rule that out.
-Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": ""}.
+Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
 Association strength must never exceed WEAK for this category — same-phone screenshots are the weakest evidence method TestPass uses, with nothing tying their content to this exact session the way a live capture or a device-embedded rename would.
 Use INCONCLUSIVE if the serial is unreadable, the Store is not clearly loaded, the images are ambiguous, or any connection/account/network failure prevents a confident positive conclusion.
-Do NOT infer that a headset is blocked from a generic network, account, sign-in, or loading delay. Use FAILED only if the supplied evidence itself unambiguously shows the exact tested function cannot work (e.g. an explicit "this device can't be activated" style block screen appears instead of the expected content) — otherwise prefer INCONCLUSIVE. Never guess or over-claim.`,
+Do NOT infer that a headset is blocked from a generic network, account, sign-in, or loading delay. Use FAILED only if the supplied evidence itself unambiguously shows the exact tested function cannot work (e.g. an explicit "this device can't be activated" style block screen appears instead of the expected content) — otherwise prefer INCONCLUSIVE. Never guess or over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
   },
   nas: {
     category: "nas",
@@ -457,7 +493,7 @@ Do NOT infer that a headset is blocked from a generic network, account, sign-in,
     knownFailureMode:
       "One or more drives inside the enclosure silently failing or degraded — invisible from the outside, expensive to replace, and easy for a seller to not mention if they never checked",
     functionTested: "Drive health status (Healthy / Warning / Critical), via DSM's own Storage Manager, associated with a fresh server-name challenge",
-    primitiveLevel: "Level 3 — Device-generated challenge artifact (DSM's own drive health report)",
+    primitiveLevel: "Level 4 — Same-phone DSM screenshot (drive health page), strengthened by a live server-name rename baked into DSM's own state; a live TestPass camera photo of the enclosure is also collected, cosmetic-only",
     capabilityLabel: "EXPERIMENTAL",
     estimatedSeconds: 150,
     // Scope A (guided capture of DSM's own official web dashboard) chosen
@@ -465,27 +501,45 @@ Do NOT infer that a headset is blocked from a generic network, account, sign-in,
     // computes and labels drive health as Healthy/Warning/Critical, so a
     // bespoke telemetry pull would duplicate a first-party judgment DSM
     // already makes, for a lot more engineering and an ongoing API-version
-    // maintenance burden. DSM is accessed via a browser on a screen — the
-    // seller photographs that screen with a phone, the same way PS5/Xbox
-    // capture a TV. No new runner primitive or file-upload step needed.
+    // maintenance burden.
+    //
+    // Round 2 (physical-feasibility + error-recovery audit): switched from
+    // "photograph the monitor showing DSM" to a same-phone DSM screenshot
+    // (see NASFlow.tsx for the full reasoning) — the old copy assumed a
+    // second computer/monitor, which isn't a real requirement of running a
+    // NAS and isn't something TestPass should manufacture, and it silently
+    // broke for any seller who naturally manages DSM from their phone.
+    // Association strength stays MODERATE, not downgraded to DJI/Quest's
+    // WEAK, specifically because the server-name rename is baked into
+    // DSM's own live state rather than being a static app screen — a
+    // screenshot can only show today's code as the server's actual name if
+    // the seller genuinely renamed this NAS during this session, which is
+    // a real (if not cryptographic) freshness and same-unit-control signal
+    // a plain "screenshot whatever's on screen" step doesn't have. Did not
+    // add an automated physical-serial-label match on top of this: the
+    // rename already demonstrates the seller has live administrative
+    // control of this exact NAS, which is a stronger same-unit signal than
+    // a photographed serial number would add, so it wasn't worth the same
+    // OCR-mismatch risk flagged for DJI's serial-matching idea.
     sellerInstructions: [
-      "On a computer, log in to your NAS's DSM web interface and go to Control Panel → Network (General tab).",
+      "Using this same phone's own browser, log in to your NAS's DSM web interface and go to Control Panel → Network (General tab).",
       "Temporarily change the Server Name to the one-time TestPass code below, then Apply.",
-      "Go to Storage Manager → HDD/SSD and capture that screen (showing the new server name somewhere in the browser, e.g. the tab or page header) together with the drive health status, both readable in one photo of your monitor.",
-      "Without ending this TestPass camera session, you can change the server name back afterward if you'd like — that doesn't affect this test.",
+      "Go to Storage Manager → HDD/SSD, where the renamed server name and every drive's health status are both readable on the page. Take a screenshot on this phone (your phone's own screenshot function, not TestPass's camera) of that page.",
+      "Come back to TestPass and choose that screenshot below. You can change the server name back afterward if you'd like — that doesn't affect this test.",
+      "Finally, use TestPass's own camera to take one live photo of the NAS enclosure itself.",
     ],
     dataCollected: [
-      "One fresh photo of the DSM Storage Manager drive health page together with the one-time server-name code",
+      "One same-phone screenshot of the DSM Storage Manager drive health page, showing the one-time server-name code",
       "The one-time code TestPass generated for this session, used only to confirm the page is fresh",
-      "One general photo of the NAS enclosure itself",
+      "One general photo of the NAS enclosure itself, captured live by TestPass",
     ],
     evaluationPromptSystem: `You are the TestPass evidence evaluator for a Synology NAS drive-health test. This is not a certification and it does not prove the enclosure's complete condition (fans, power supply, network ports are not covered).
-You will be given one image: a photo of a monitor showing the DSM web interface's Storage Manager drive health page, with the one-time server-name code visible somewhere in the same browser window (e.g. the browser tab, window title, or a DSM header showing the renamed server). The expected code and any other context will follow as text after the image.
+You will be given one image: a same-phone screenshot (not a live TestPass camera capture) of the DSM web interface's Storage Manager drive health page, with the one-time server-name code visible somewhere on that page (e.g. a DSM header or panel showing the renamed server) — not a separately held or photographed object. The expected code and any other context will follow as text after the image.
 Decide whether the evidence is consistent with a healthy NAS:
-1. The one-time code is legible as the DSM server's own name somewhere in the captured browser window, matching the expected code — evidence this is a fresh, current session and not a reused old screenshot.
+1. The one-time code is legible as the DSM server's own name somewhere on the captured page, matching the expected code — evidence the seller genuinely renamed this NAS during this session, not a reused old screenshot.
 2. Every listed drive shows DSM's own "Healthy" status. DSM's own labels are the ground truth here — do not second-guess a Healthy label, and do not invent a judgment DSM itself doesn't make.
 Respond ONLY with strict JSON: {"verdict": "DEMONSTRATED" | "FAILED" | "INCONCLUSIVE", "reasoning": "one or two sentences, plain language, for a non-technical buyer", "association_strength": "STRONG" | "MODERATE" | "WEAK" | "INCONCLUSIVE", "cosmetic_note": "optional, see below"}.
-Association strength should rarely exceed MODERATE — a browser screenshot photographed off a monitor is not cryptographically tied to one physical NAS, and if the code isn't clearly part of the same captured window as the drive list, treat association as WEAK. Use INCONCLUSIVE if the code doesn't match or isn't legible, the page is blurry or cropped, or you can't confidently read every drive's status. Use FAILED only if DSM's own page clearly shows at least one drive as "Warning" or "Critical" — say so plainly and do not speculate about which drive or how urgent, since TestPass only observed DSM's label, not the underlying SMART data. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
+Association strength should rarely exceed MODERATE — a same-phone screenshot's pixel data isn't tamper-evident the way a live camera frame with server-side capture proof is, so STRONG is never appropriate here. But unlike a plain app screenshot, this one only works as evidence if the code is genuinely showing as the NAS's own current server name, which requires having just renamed this exact NAS — so MODERATE is appropriate whenever the code and every drive's status are both clearly legible on the page, not capped down to WEAK the way a static, non-session-bound screenshot would be. Treat association as WEAK if the code isn't clearly part of the same captured page as the drive list. Use INCONCLUSIVE if the code doesn't match or isn't legible, the page is cropped or hard to read, or you can't confidently read every drive's status. Use FAILED only if DSM's own page clearly shows at least one drive as "Warning" or "Critical" — say so plainly and do not speculate about which drive or how urgent, since TestPass only observed DSM's label, not the underlying SMART data. Never guess — under-claim rather than over-claim.${PRODUCT_PHOTO_ADDENDUM}`,
   },
   printer3d: {
     category: "printer3d",
