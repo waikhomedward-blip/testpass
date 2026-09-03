@@ -3,6 +3,9 @@ import { Category } from "@/lib/types";
 // Minimal, consistent-stroke inline icons per category — keeps the front
 // page scannable at a glance instead of relying on label text alone.
 export default function CategoryIcon({ category, className }: { category: Category; className?: string }) {
+  // WCAG audit: every call site pairs this icon with a visible text label
+  // (the category name) right next to it, so the icon itself carries no
+  // information a screen reader needs to announce separately.
   const common = {
     className,
     viewBox: "0 0 24 24",
@@ -11,6 +14,7 @@ export default function CategoryIcon({ category, className }: { category: Catego
     strokeWidth: 1.6,
     strokeLinecap: "round" as const,
     strokeLinejoin: "round" as const,
+    "aria-hidden": "true" as const,
   };
 
   switch (category) {

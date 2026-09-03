@@ -107,7 +107,7 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
           >
             {copied ? (
               <>
-                <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 shrink-0">
+                <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 shrink-0" aria-hidden="true">
                   <path
                     d="M4 10.5l3.5 3.5L16 5.5"
                     stroke="currentColor"

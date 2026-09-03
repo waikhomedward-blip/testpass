@@ -250,15 +250,22 @@ function PhotoSlot({
 }) {
   return (
     <label className="block cursor-pointer">
+      {/* WCAG 2.1.1 fix: `hidden` (display:none) removes an input from the
+          tab order entirely, so a keyboard-only seller could never reach
+          this file picker at all — the label alone isn't natively
+          keyboard-activatable. `sr-only` keeps the real input focusable
+          (screen readers and Tab both reach it); `peer` + `peer-focus-
+          visible:` puts the same focus ring used everywhere else onto the
+          visible card underneath it when that hidden input has focus. */}
       <input
         ref={inputRef}
         type="file"
         accept="image/*"
-        className="hidden"
+        className="peer sr-only"
         onChange={(e) => onChange(e.target.files?.[0])}
       />
       <div
-        className={`flex aspect-square flex-col items-center justify-center overflow-hidden rounded-[var(--radius-lg)] border ${
+        className={`flex aspect-square flex-col items-center justify-center overflow-hidden rounded-[var(--radius-lg)] border peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-signal ${
           shot ? "evidence-frame border-signal shadow-card" : "border-dashed border-border-control"
         } bg-card text-center`}
       >

@@ -143,16 +143,24 @@ export default function MyTestsPage() {
                     </span>
                   )}
                 </div>
-                <div className="mt-3 flex items-center gap-4 text-sm">
+                {/* WCAG 2.5.8: plain inline text links here would have a
+                    tap target under the 24px minimum (text-sm's line-height
+                    alone is 20px, with no padding). -my-2 py-2 keeps the
+                    text's baseline position unchanged while giving each
+                    link a full 24px+ tall hit area. */}
+                <div className="-my-2 mt-1 flex items-center gap-4 text-sm">
                   {!row.notFound && (
-                    <Link href={`/buyer/session/${row.id}`} className="font-medium text-signal hover:underline">
+                    <Link
+                      href={`/buyer/session/${row.id}`}
+                      className="py-2 font-medium text-signal hover:underline"
+                    >
                       View status
                     </Link>
                   )}
                   <button
                     type="button"
                     onClick={() => forget(row.id)}
-                    className="text-ink-secondary hover:text-foreground"
+                    className="py-2 text-ink-secondary hover:text-foreground"
                   >
                     Remove from this list
                   </button>
