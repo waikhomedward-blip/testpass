@@ -116,3 +116,6 @@ above.
 | `CRON_SECRET` | Authorizes the daily `/api/cleanup` retention job |
 | `BETA_NOINDEX_ALL` | `"true"` to keep the entire site out of search during beta |
 | `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` | Database + storage |
+| `SUPPORT_INBOX` | Private destination address for `/contact` submissions — server-only, never `NEXT_PUBLIC_*`, never sent to the browser |
+| `CONTACT_FROM_EMAIL` | The `From:` address `/contact` sends notification email as (e.g. `TestPass <contact@testpass.me>`) |
+| `RESEND_API_KEY` | Resend API key used by `src/lib/email.ts` to send the `/contact` notification email — server-only secret |
