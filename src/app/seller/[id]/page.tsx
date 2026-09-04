@@ -112,7 +112,7 @@ export default async function SellerSessionPage(props: PageProps<"/seller/[id]">
       </div>
 
       <div className="mt-6 text-right">
-        <ReportProblem sessionId={id} actor="seller" stage={session.status} page="seller_flow" />
+        <ReportProblem sessionId={id} actor="seller" page="seller_flow" />
       </div>
     </div>
   );
