@@ -34,8 +34,20 @@ export async function GET(_req: NextRequest, ctx: RouteContext<"/api/sessions/[i
     if (session.status === "COMPLETED" && withImages.evidence.length > 0) {
       // Deduped per session (once: true) — this route is polled every 4s
       // by SessionStatus.tsx, so without dedup this would fire dozens of
-      // times per real view.
-      await recordEvent({ sessionId: id, eventType: "buyer_viewed_result", once: true });
+      // times per real view. This is the accurate "result actually viewed"
+      // event for BOTH a real paid unlock and a free Early Access view (the
+      // only two ways this branch is reached), so the Early Access pricing
+      // pivot reuses it rather than adding a parallel free_result_viewed
+      // event — the `free` flag plus the session's own `cohort` field
+      // (early_access_free vs. null) are what let a later paid-conversion
+      // query exclude free-viewed results without needing a second event
+      // type to keep in sync.
+      await recordEvent({
+        sessionId: id,
+        eventType: "buyer_viewed_result",
+        once: true,
+        metadata: { free: !PAYWALL_ENABLED },
+      });
     }
     return NextResponse.json(withImages);
   } catch (err) {
