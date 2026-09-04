@@ -283,6 +283,43 @@ export async function submitFeedback(input: {
   return true;
 }
 
+// Contact/support messages -- deliberately separate from submitFeedback()
+// above rather than reusing the `feedback` table. Feedback rows are always
+// tied to a specific session/stage by construction; a contact message is
+// not -- "I have a question before using this" or a partnership inquiry has
+// no session at all, and forcing it into feedback's session-shaped columns
+// would mean inventing a fake stage for something that isn't one. See
+// supabase/add-contact-messages.sql for the table + RLS (service-role only,
+// same posture as `feedback` -- no client can ever read another person's
+// contact message).
+export async function submitContactMessage(input: {
+    reason: "problem" | "question" | "feedback" | "other";
+    replyEmail?: string | null;
+    message: string;
+    sessionId?: string | null;
+    category?: string | null;
+    actor?: "buyer" | "seller" | "visitor" | null;
+    stage?: string | null;
+    pagePath?: string | null;
+}): Promise<boolean> {
+    const db = getSupabaseAdmin();
+    const { error } = await db.from("contact_messages").insert({
+          reason: input.reason,
+          reply_email: input.replyEmail ?? null,
+          message: input.message,
+          session_id: input.sessionId ?? null,
+          category: input.category ?? null,
+          actor: input.actor ?? null,
+          stage: input.stage ?? null,
+          page_path: input.pagePath ?? null,
+    });
+    if (error) {
+          console.error("submitContactMessage failed:", error.message);
+          return false;
+    }
+    return true;
+}
+
 export async function uploadCapture(
   sessionId: string,
   filename: string,
