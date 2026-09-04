@@ -5,18 +5,26 @@ description: Current release hash, domain, paywall price, enabled categories, kn
 
 # TestPass launch state
 
-_Last updated: 2026-09-03. Update the "Last updated" line and the fields below every time
+_Last updated: 2026-09-04. Update the "Last updated" line and the fields below every time
 Production changes in a way that affects this list — not a general changelog._
 
 ## Domain
 
-**Not yet resolved — owner action required.** No custom domain is connected in Vercel
-(`vercel.com/edwardteam/testpass` → Domains is empty). Until one is connected, the only
-customer-facing URL is a `*.vercel.app` preview/production URL, which the beta operating
-directive explicitly says no customer should ever see. See the launch report for the exact
-next step. The application code already derives every customer-facing URL from the live
-request origin (`req.nextUrl.origin` / `window.location.origin`), so connecting a domain in
-Vercel requires zero code changes.
+**Resolved.** `testpass.me` was purchased by the owner through Vercel's registrar and
+connected to the project's Production environment on 2026-09-04. Verified working: the
+domain resolves over HTTPS with a valid certificate, and a fresh buyer session generates a
+seller link on `https://testpass.me/seller/...` — confirming the zero-code-change design
+(every customer-facing URL is derived from the live request origin) held as expected.
+`robots.txt` and per-session `noindex` were re-verified on the new domain and match the
+`testpass-sigma.vercel.app` behavior exactly. The apex domain serves directly (no forced
+`www` redirect). Renews 2027-09-04 at $20.00/year (year-one promo price was $1.99) — flagged
+here so the renewal isn't a surprise. Separately, Vercel is showing an account-level "billing
+address missing or incomplete" notice under Settings → Billing — unrelated to the domain
+itself, but worth the owner clearing up before the renewal charge is due.
+
+The old `testpass-sigma.vercel.app` URL is still attached to the project and still resolves
+(Vercel doesn't require removing it), so nothing breaks for anyone who has that link
+bookmarked from before launch — but `testpass.me` is now what should be shared going forward.
 
 ## Payment processing
 
@@ -73,6 +81,6 @@ payment_completed`.
 ## Current beta phase
 
 Pre-launch — the launch-readiness wave (release `5d86947`) is merged to `main` and deployed to
-Production. Launch still cannot be declared "live" for real paid transactions until the domain
-and Stripe activation items above are resolved by the owner; everything else on the launch
-decision gate is clean.
+Production, and the custom domain is now connected. Launch still cannot be declared "live" for
+real paid transactions until the Stripe activation item above is resolved by the owner — that
+is now the only remaining blocker; everything else on the launch decision gate is clean.
