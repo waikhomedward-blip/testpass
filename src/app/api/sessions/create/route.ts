@@ -3,6 +3,7 @@ import { createSession } from "@/lib/db";
 import { CATEGORY_CONFIG } from "@/lib/primitives";
 import { Category } from "@/lib/types";
 import { isSupabaseConfigured, SupabaseNotConfiguredError } from "@/lib/supabase/server";
+import { PAYWALL_ENABLED } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {
   if (!isSupabaseConfigured()) {
@@ -42,7 +43,18 @@ export async function POST(req: NextRequest) {
   // toggle for this — see Section 19 of the beta operating directive.
   const qaParam = req.nextUrl.searchParams.get("qa");
   const qaSecret = process.env.QA_COHORT_SECRET;
-  const cohort = qaSecret && qaParam === qaSecret ? "physical_qa" : null;
+  // Early Access pricing pivot: while the paywall is globally off, every
+  // genuine (non-QA) session is a free-viewing session by construction, not
+  // a real willingness-to-pay signal. Tagging it here — server-side, same
+  // pattern as physical_qa, never client-supplied — is what lets a future
+  // paid-conversion query exclude both non-genuine categories without
+  // deleting or hiding any rows. physical_qa still takes precedence: a
+  // recruited QA session stays tagged as QA even during Early Access.
+  const cohort = qaSecret && qaParam === qaSecret
+    ? "physical_qa"
+    : !PAYWALL_ENABLED
+    ? "early_access_free"
+    : null;
 
   try {
     const { id } = await createSession({
