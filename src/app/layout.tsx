@@ -63,6 +63,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               <Link href="/terms" className="hover:text-signal hover:underline">
                 Terms
               </Link>
+              <Link href="/contact" className="hover:text-signal hover:underline">
+              Contact
+              </Link>
             </p>
           </div>
         </footer>
