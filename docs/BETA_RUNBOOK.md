@@ -16,6 +16,17 @@ deployments). Every result becomes free to view immediately, and new sessions ar
 already unlocked (`createSession` in `src/lib/db.ts`). No code change, no data loss. Re-enable
 by setting it back to `true`.
 
+**This is exactly the mechanism behind Early Access** (see `docs/LAUNCH_STATE.md` for the full
+plan and exit gate) — TestPass launched with this flag `false` on purpose, as a temporary free
+validation period, not an outage or a permanent pricing decision. While it's off: sessions are
+tagged `cohort: "early_access_free"` at creation (unless already `physical_qa`), the buyer-facing
+copy reads "free during Early Access" rather than any discount framing, and the
+`buyer_viewed_result` event carries `metadata: { free: true }` — all so a free view is never
+mistaken for a paid conversion later. Re-enabling this flag (per the exit gate in
+`docs/LAUNCH_STATE.md`) automatically restores the $5 paywall copy and Stripe Checkout flow with
+no further code changes. Re-enabling requires Stripe account activation to actually be complete
+first, or real buyers will hit a paywall that can't process a charge.
+
 ## Disable one category
 
 Set `DISABLED_CATEGORIES` in Vercel to a comma-separated list of category keys (e.g.

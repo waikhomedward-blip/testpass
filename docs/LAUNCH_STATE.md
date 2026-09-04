@@ -8,6 +8,66 @@ description: Current release hash, domain, paywall price, enabled categories, kn
 _Last updated: 2026-09-04. Update the "Last updated" line and the fields below every time
 Production changes in a way that affects this list — not a general changelog._
 
+## Early Access (free validation period) — ACTIVE
+
+**Pricing strategy pivot, decided 2026-09-04.** Rather than wait for Stripe activation to launch,
+TestPass is launching now with the paywall globally OFF (`NEXT_PUBLIC_PAYWALL_ENABLED = false`) for
+a temporary, explicitly time/volume-boxed free validation period. Nothing about the paywall
+architecture, Stripe integration, or $5 pricing was removed or redesigned — this is a mode, not a
+rebuild. Rationale: Stripe isn't activated yet anyway (see below), the first real users are also
+functioning as physical-device QA, and the feedback/analytics infrastructure needed to make a free
+period actually useful is already live. Payment infrastructure stays dormant, not deleted.
+
+**What Early Access answers, and what it doesn't:** free Early Access tells us whether TestPass
+physically works and produces a legitimate, useful result for a buyer — shared primitives holding
+up across real devices, sellers completing the flow, evaluator output being trustworthy. It does
+**not** tell us whether genuine buyers will pay $5 for that value. Those are two different
+questions; a later paid cohort answers the second one. Free usage during Early Access must never be
+read as a willingness-to-pay signal — see the cohort tagging and event metadata below, which exist
+specifically to keep the two apart in later analysis.
+
+**How it's implemented (no redesign, just the existing kill switch):**
+- `NEXT_PUBLIC_PAYWALL_ENABLED=false` in Vercel Production — the same global switch already
+  documented in `docs/BETA_RUNBOOK.md`. Every new session starts unlocked (`createSession` in
+  `src/lib/db.ts`); no buyer is ever routed into Stripe Checkout while this is off.
+- Every genuine (non-`physical_qa`) session created while the paywall is off is tagged
+  `cohort: "early_access_free"` (`src/app/api/sessions/create/route.ts`), distinct from
+  `physical_qa`, so later paid-conversion analysis can exclude both non-genuine categories.
+- The buyer create page and the buyer result page both show honest "free during Early Access"
+  copy (never fake-discount language like "$5 → $0" or "normally $5") and both auto-revert to the
+  existing paid copy the instant the paywall is re-enabled — nothing to manually undo.
+- The `buyer_viewed_result` funnel event now carries `metadata: { free: true }` for these views
+  (`src/app/api/sessions/[id]/route.ts`) instead of a separate event type, so it stays one accurate
+  "result was actually viewed" event whether the view was free or paid.
+- Buyers optionally see one extra stated-preference question: "If this hadn't been free during
+  Early Access, would this result have been worth $5 to you? Definitely / Maybe / No" — recorded via
+  the existing `feedback` table (`stage: "pricing_early_access"`), explicitly as a stated preference,
+  never labeled or treated as payment intent or conversion.
+
+**Exit condition — review, don't auto-extend:** review monetization after roughly 30-50 genuine
+(non-QA, non-Early-Access-excluded-from-the-review-itself... i.e. just real attempts) TestPass
+attempts, or sooner if the evidence already shows: shared physical primitives working across real
+devices, no systemic seller-flow defect, legitimate results that buyers find useful (via the
+existing "Did TestPass help you decide?" feedback), and TestPass-side technical failures
+(`technical_error = true`) uncommon. Do not extend free access just because usage looks exciting —
+the gate is evidence-based, not vibes-based.
+
+**When the gate is met, in order:**
+1. Activate/verify the Stripe account (see "Payment processing" below — nothing here changes that
+   requirement, it just no longer blocks launch).
+2. Verify payment config end-to-end (Checkout, webhook, unlock) with a real low-stakes charge.
+3. Flip `NEXT_PUBLIC_PAYWALL_ENABLED` back to `true` in Vercel Production and redeploy if needed.
+4. Confirm the existing $5 copy is back (it auto-reverts — verify, don't assume).
+5. Begin genuine willingness-to-pay testing at $5.
+
+**Price after Early Access:** stays **$5.00 USD, one-time** — not $1, no subscription, no
+multi-price A/B test yet. The price is frozen for the first meaningful paid cohort so an early
+signal isn't confused with a pricing experiment.
+
+**Refunds:** no refund automation during Early Access (nothing is being charged). Once the paid
+cohort resumes, the existing manual refund policy in `docs/BETA_RUNBOOK.md` ("Refund a confirmed
+TestPass technical failure") applies unchanged.
+
 ## Domain
 
 **Resolved.** `testpass.me` was purchased by the owner through Vercel's registrar and
@@ -28,15 +88,17 @@ bookmarked from before launch — but `testpass.me` is now what should be shared
 
 ## Payment processing
 
-**Not yet resolved — owner action required.** The Stripe account (`acct_1U9jBCDvE8FU7I5E`)
-shows "Activation required" and cannot process any live payment method, including a plain
-card, until Stripe's own business/identity/bank-verification onboarding is completed. This is
-separate from and in addition to the domain issue — API keys and webhook config being correct
-does not mean the account can actually charge anyone. Application-side, the checkout flow
-(Stripe Checkout, one-time payment, card-only for V1, webhook-authoritative unlock) is built
-and ready; it simply cannot process a real charge until this account-level activation is done
-by the account owner (requires personal/business/banking details this session cannot enter on
-the owner's behalf).
+**Not yet resolved — owner action required — but no longer a launch blocker.** The Stripe
+account (`acct_1U9jBCDvE8FU7I5E`) shows "Activation required" and cannot process any live
+payment method, including a plain card, until Stripe's own business/identity/bank-verification
+onboarding is completed. This is separate from and in addition to the domain issue — API keys
+and webhook config being correct does not mean the account can actually charge anyone.
+Application-side, the checkout flow (Stripe Checkout, one-time payment, card-only for V1,
+webhook-authoritative unlock) is built and ready; it simply cannot process a real charge until
+this account-level activation is done by the account owner (requires personal/business/banking
+details this session cannot enter on the owner's behalf). Per the Early Access section above,
+this is no longer what launch is waiting on — TestPass now launches free, and Stripe activation
+becomes the blocker for exiting Early Access into the paid cohort, not for launching at all.
 
 ## Release
 
@@ -49,7 +111,9 @@ subsequent Production deploy.
 - Price: $5.00 USD, one-time, no subscription (`RESULT_PRICE_AMOUNT` / `RESULT_PRICE_CURRENCY`
   env vars, defaulting to 500 / "usd")
 - Enabled via `NEXT_PUBLIC_PAYWALL_ENABLED` — confirm current value in Vercel before assuming
-  it's on
+  it's on. **Currently `false` during Early Access** (see the Early Access section above) — this
+  is intentional, not a regression, and is planned to flip back to `true` once the exit gate is
+  met.
 - Chargeable-result gate is live: a session whose evidence has `technical_error = true` is
   never charged (`src/app/api/checkout/[id]/route.ts`)
 
@@ -80,7 +144,11 @@ payment_completed`.
 
 ## Current beta phase
 
-Pre-launch — the launch-readiness wave (release `5d86947`) is merged to `main` and deployed to
-Production, and the custom domain is now connected. Launch still cannot be declared "live" for
-real paid transactions until the Stripe activation item above is resolved by the owner — that
-is now the only remaining blocker; everything else on the launch decision gate is clean.
+**Early Access (free) — live for real participant acquisition.** The launch-readiness wave
+(release `5d86947`) is merged to `main` and deployed to Production, the custom domain is
+connected, and the Early Access free-mode changes above are deployed with
+`NEXT_PUBLIC_PAYWALL_ENABLED=false` in Production. Real buyers and sellers can use TestPass
+today at no cost, per the pricing-strategy pivot documented above. The transition to a genuinely
+paid cohort at $5 is gated on the Early Access exit condition above (roughly 30-50 genuine
+attempts or clean signals sooner) plus Stripe account activation — neither is required to be
+"live" right now, only to move past Early Access into paid.
