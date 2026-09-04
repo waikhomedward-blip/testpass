@@ -62,8 +62,7 @@ export default function PrivacyPage() {
 
       <h2 className="mt-6 font-semibold text-foreground">Questions or problems</h2>
       <p className="mt-2">
-        The fastest way to reach TestPass is the &quot;Report a problem&quot; link on any test page,
-        which automatically includes the session so we can look into it.
+                The fastest way to reach TestPass is the &quot;Contact&quot; link in the site footer, or &quot;Report a problem&quot; on any test page — both open the same contact form. Your message is stored so we can look into it, along with the session, page, and role automatically attached when you reach it from an active test. An email address is only required if you&apos;d like a reply, and is used solely to respond to your message — never for marketing. We keep contact messages for as long as they&apos;re operationally useful for support during Early Access, and don&apos;t share them outside TestPass&apos;s own infrastructure providers.
       </p>
     </div>
   );
