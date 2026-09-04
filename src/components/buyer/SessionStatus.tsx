@@ -153,7 +153,7 @@ export default function SessionStatus({ sessionId }: { sessionId: string }) {
       )}
 
       <div className="pt-2 text-right">
-        <ReportProblem sessionId={sessionId} actor="buyer" stage={session.status} page="buyer_session" />
+        <ReportProblem sessionId={sessionId} actor="buyer" page="buyer_session" />
       </div>
     </div>
   );
