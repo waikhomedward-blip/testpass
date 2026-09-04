@@ -227,12 +227,21 @@ export default function NewSessionForm({ config }: { config: CategoryConfig }) {
 
       {/* Price disclosed before the session is even created — Section 9 of
           the beta operating directive: never a surprise sprung after the
-          seller has already completed the test. */}
+          seller has already completed the test. The Early Access branch
+          (PAYWALL_ENABLED false) is deliberately not framed as a discount
+          or promotion — it auto-reverts to the paid copy the moment the
+          paywall env var flips back to true, so nothing here needs manual
+          un-doing once Early Access ends. */}
       <p className="mt-4 text-xs text-ink-secondary">
         {PAYWALL_ENABLED
           ? `Creating the test is free. It's ${RESULT_PRICE_DISPLAY}, one time, only if you unlock the finished result — and only after the seller completes it. The seller never pays anything.`
-          : "Free while TestPass is being built out. The seller never pays anything."}
+          : "Creating and viewing your TestPass is free during Early Access. Sellers never pay."}
       </p>
+      {!PAYWALL_ENABLED && (
+        <p className="mt-1 text-xs text-ink-secondary">
+          Completed results are planned to cost {RESULT_PRICE_DISPLAY} after Early Access.
+        </p>
+      )}
 
       <button
         type="submit"

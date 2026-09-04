@@ -25,6 +25,11 @@ const POLL_MS = 4000;
 export default function SessionStatus({ sessionId }: { sessionId: string }) {
   const [session, setSession] = useState<SessionWithEvidence | null>(null);
   const [loadError, setLoadError] = useState(false);
+  // Early Access free-result gate (see FreeResultCard below) — only ever
+  // relevant while NEXT_PUBLIC_PAYWALL_ENABLED is false. Once the paywall
+  // is back on, this state is simply never read (the `PAYWALL_ENABLED ||`
+  // branch below always takes the PAYWALL_ENABLED side).
+  const [revealed, setRevealed] = useState(false);
   // Reflects the `?checkout=success|cancelled|unavailable` the checkout
   // route already redirects back with (src/app/api/checkout/[id]/route.ts,
   // src/lib/stripe.ts) — read client-side via window.location rather than
@@ -133,18 +138,17 @@ export default function SessionStatus({ sessionId }: { sessionId: string }) {
 
       {isDone && locked && <PaywallCard sessionId={sessionId} session={session} />}
 
-      {isDone && !locked && (
+      {isDone && !locked && !PAYWALL_ENABLED && !revealed && (
+        <FreeResultCard onView={() => setRevealed(true)} />
+      )}
+
+      {isDone && !locked && (PAYWALL_ENABLED || revealed) && (
         <div className="space-y-6">
-          {!PAYWALL_ENABLED && (
-            <p className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-ink-secondary">
-              Payment isn&apos;t turned on yet — you&apos;re seeing this result for free while TestPass
-              is being built out.
-            </p>
-          )}
           {session.evidence.map((ev) => (
             <EvidenceReport key={ev.id} evidence={ev} completedAt={session.submitted_at} />
           ))}
           <BuyerFeedback sessionId={sessionId} />
+          {!PAYWALL_ENABLED && <PricingLearningQuestion sessionId={sessionId} />}
         </div>
       )}
 
@@ -232,6 +236,60 @@ function BuyerFeedback({ sessionId }: { sessionId: string }) {
   );
 }
 
+// Early Access-only stated-preference question (separate from
+// BuyerFeedback above, and independent of whether that one was answered) —
+// this is the pricing-strategy pivot's willingness-to-pay learning signal,
+// recorded strictly as a stated preference, never as an actual conversion
+// or payment event. Only ever rendered while !PAYWALL_ENABLED (see
+// SessionStatus above), so it's simply unreachable code once the paywall
+// comes back on — nothing to manually remove.
+function PricingLearningQuestion({ sessionId }: { sessionId: string }) {
+  const [sent, setSent] = useState(false);
+
+  async function send(answer: string) {
+    setSent(true);
+    try {
+      await fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          actor: "buyer",
+          stage: "pricing_early_access",
+          rating: answer,
+          page: "buyer_session",
+        }),
+      });
+    } catch {
+      // Best-effort, same as BuyerFeedback — never blocks the buyer.
+    }
+  }
+
+  if (sent) return null;
+
+  return (
+    <div className="rounded-lg border border-dashed border-border px-4 py-3">
+      <p className="text-sm font-medium">One optional question</p>
+      <p className="mt-1 text-xs text-ink-secondary">
+        If this hadn&apos;t been free during Early Access, would this result have been worth{" "}
+        {RESULT_PRICE_DISPLAY} to you?
+      </p>
+      <div className="mt-2 flex gap-2">
+        {["Definitely", "Maybe", "No"].map((opt) => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => send(opt)}
+            className="rounded-lg border border-border-control px-3 py-1.5 text-xs font-medium text-ink-secondary transition-colors hover:border-signal hover:text-signal"
+          >
+            {opt}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // Wave 1.1: the paywall should read as the natural next step in the
 // evidence journey the buyer already started, not an ecommerce
 // interruption — this specific test, this specific unit, what TestPass
@@ -269,6 +327,40 @@ function PaywallCard({ sessionId, session }: { sessionId: string; session: Sessi
             Unlock result — {RESULT_PRICE_DISPLAY}
           </button>
         </form>
+      </div>
+    </div>
+  );
+}
+
+// Early Access free-result gate — this is what stands in for PaywallCard
+// while NEXT_PUBLIC_PAYWALL_ENABLED is false. It is deliberately NOT a
+// discount or promotion frame ("$5 → $0", "normally $5", "100% off" are all
+// intentionally absent) — TestPass is mid-validation, and this is an honest
+// statement that the completed result is free to view right now, not a
+// sale. The moment the paywall env var flips back to true, this branch
+// stops being reachable in SessionStatus above and PaywallCard takes over
+// again automatically — nothing here needs to be manually reverted.
+function FreeResultCard({ onView }: { onView: () => void }) {
+  return (
+    <div className="rounded-[var(--radius-lg)] border border-border-subtle bg-card p-6 shadow-card">
+      <p className="type-label">Result ready</p>
+      <p className="mt-1 text-base font-semibold">Free during Early Access</p>
+      <p className="mt-2 text-sm text-ink-secondary">
+        We&apos;re currently validating TestPass across real phones and devices, so your completed
+        result is free during Early Access.
+      </p>
+      <div className="mt-4 border-t border-border-subtle pt-4">
+        <button
+          type="button"
+          onClick={onView}
+          className="w-full rounded-lg bg-signal py-2.5 text-sm font-medium text-white transition-colors hover:bg-signal-hover"
+        >
+          View result
+        </button>
+        <p className="mt-2 text-xs text-ink-secondary">
+          TestPass is planned to cost {RESULT_PRICE_DISPLAY} to unlock a completed result after Early
+          Access. Sellers never pay.
+        </p>
       </div>
     </div>
   );
