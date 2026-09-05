@@ -18,5 +18,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/buyer/session/", "/buyer/mine", "/seller/"],
     },
+    sitemap: "https://testpass.me/sitemap.xml",
   };
 }
