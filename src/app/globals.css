@@ -20,10 +20,10 @@
 
 :root {
   /* Wave 1.1: private beta is deliberately light-only (see the note further
-     down where the old dark-mode @media block used to live) — this stops a
-     dark-OS browser from rendering native form-control chrome (date
-     pickers, selects, scrollbars) in its own dark theme while every
-     custom-styled element on the page stays light. */
+  down where the old dark-mode @media block used to live) — this stops a
+  dark-OS browser from rendering native form-control chrome (date
+  pickers, selects, scrollbars) in its own dark theme while every
+  custom-styled element on the page stays light. */
   color-scheme: light;
 
   /* Surfaces */
@@ -32,12 +32,12 @@
   --card: #ffffff;
 
   /* Two border concepts, not one token doing two jobs (Wave 1.1 fix):
-     --border-subtle separates cards/dividers and carries no contrast
-     requirement of its own — it's decorative. --border-control is what
-     lets a person perceive an input/control's boundary, so it's held to
-     WCAG 1.4.11's 3:1 non-text minimum against both --paper and --card
-     (checked: ~3.3:1 and ~3.7:1 respectively). --border stays as an
-     alias to --border-subtle so nothing untouched breaks. */
+  --border-subtle separates cards/dividers and carries no contrast
+  requirement of its own — it's decorative. --border-control is what
+  lets a person perceive an input/control's boundary, so it's held to
+  WCAG 1.4.11's 3:1 non-text minimum against both --paper and --card
+  (checked: ~3.3:1 and ~3.7:1 respectively). --border stays as an
+  alias to --border-subtle so nothing untouched breaks. */
   --border-subtle: #e4ddc9;
   --border-control: #737982; /* Wave 1.1: cooler neutral, not the original warm/brown #8f8567 — a beige-leaning control border pulled the whole system toward "archival" rather than "precise instrument." Verified ~3.96:1 on --paper, ~4.39:1 on --card (both clear WCAG 1.4.11's 3:1 non-text minimum with real headroom). */
   --border: var(--border-subtle);
@@ -50,8 +50,8 @@
   --signal-hover: #1a3fc4;
 
   /* Status — each pair is a solid text/icon color plus a low-opacity
-     wash for chip backgrounds, kept off pure color so text stays legible
-     inside a colored chip on both themes. */
+  wash for chip backgrounds, kept off pure color so text stays legible
+  inside a colored chip on both themes. */
   --proof: #0d7a53;
   --proof-wash: #0d7a531a;
   --caution: #9a5a00;
@@ -70,7 +70,7 @@
   --radius-lg: 14px;
 
   /* Shadow — restrained: a card is set off by a hairline border first,
-     a shadow only adds a whisper of lift, never a floating-panel look. */
+  a shadow only adds a whisper of lift, never a floating-panel look. */
   --shadow-card: 0 1px 2px rgba(17, 19, 21, 0.04), 0 1px 3px rgba(17, 19, 21, 0.06);
   --shadow-raised: 0 2px 4px rgba(17, 19, 21, 0.05), 0 4px 10px rgba(17, 19, 21, 0.08);
 }
@@ -127,7 +127,7 @@ body {
 }
 
 /* Visible keyboard focus everywhere, respecting the OS reduced-motion
-   preference for anything that would otherwise transition/animate. */
+preference for anything that would otherwise transition/animate. */
 :focus-visible {
   outline: 2px solid var(--signal);
   outline-offset: 2px;
@@ -148,16 +148,16 @@ body {
  *
  * The recognizable, repeatable TestPass moves — small in number and each
  * one meaningful, not decorative:
- *   - .evidence-frame  registration corners, reserved for captured
- *     physical evidence (photos, capture frames) and nothing else. Do not
- *     apply to challenge-code cards, ordinary cards, or headings — the
- *     mark means "this came from the physical device," and using it
- *     anywhere else dilutes that into generic tech decoration.
- *   - indexed step numerals (.step-num-lg / .step-num-sm below) — real
- *     sequence information, not ornament, so they're allowed to repeat
- *     across 13+ device categories the way corner marks are not.
- *   - restrained signal-blue rules used structurally (a short rule under
- *     a heading, a numeral color) rather than blue backgrounds/fills.
+ * - .evidence-frame registration corners, reserved for captured
+ *   physical evidence (photos, capture frames) and nothing else. Do not
+ *   apply to challenge-code cards, ordinary cards, or headings — the
+ *   mark means "this came from the physical device," and using it
+ *   anywhere else dilutes that into generic tech decoration.
+ * - indexed step numerals (.step-num-lg / .step-num-sm below) — real
+ *   sequence information, not ornament, so they're allowed to repeat
+ *   across 13+ device categories the way corner marks are not.
+ * - restrained signal-blue rules used structurally (a short rule under
+ *   a heading, a numeral color) rather than blue backgrounds/fills.
  * ------------------------------------------------------------------- */
 
 .evidence-frame {
@@ -184,7 +184,7 @@ body {
 }
 
 /* Large numeral: orients a seller to a brand-new major step. Used once or
-   twice per screen at most, never as a running list. */
+twice per screen at most, never as a running list. */
 .step-num-lg {
   font-variant-numeric: tabular-nums;
   font-weight: 800;
@@ -195,7 +195,7 @@ body {
 }
 
 /* Compact numeral: contextual progress ("02 / 04"), monospaced so it reads
-   as machine-generated metadata rather than a heading. */
+as machine-generated metadata rather than a heading. */
 .step-num-sm {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -213,20 +213,20 @@ body {
  * system stop looking like a system. Eight explicit roles, each with one
  * job:
  *
- *   display        — not yet used anywhere in-product (no marketing hero
- *                     exists), reserved for if one ever does. Largest text
- *                     in the system by definition, so it's defined once
- *                     here rather than invented ad hoc if that day comes.
- *   type-page-title — the one H1 per screen ("Test a GoPro", "My tests").
- *   type-section-title — a named subsection within a screen (e.g. "Send
- *                     this link to the seller").
- *   type-body       — default running text.
- *   type-body-small — secondary/supporting text at the next size down.
- *   type-label      — the uppercase eyebrow/section-label pattern.
- *   type-metadata   — small monospaced machine-readable text: IDs,
- *                     timestamps, capability tags.
- *   type-code       — larger monospaced text for a value meant to be read
- *                     or copied character-by-character (a challenge code).
+ * display             — not yet used anywhere in-product (no marketing hero
+ *                        exists), reserved for if one ever does. Largest text
+ *                        in the system by definition, so it's defined once
+ *                        here rather than invented ad hoc if that day comes.
+ * type-page-title      — the one H1 per screen ("Test a GoPro", "My tests").
+ * type-section-title   — a named subsection within a screen (e.g. "Send
+ *                        this link to the seller").
+ * type-body            — default running text.
+ * type-body-small       — secondary/supporting text at the next size down.
+ * type-label           — the uppercase eyebrow/section-label pattern.
+ * type-metadata        — small monospaced machine-readable text: IDs,
+ *                        timestamps, capability tags.
+ * type-code            — larger monospaced text for a value meant to be read
+ *                        or copied character-by-character (a challenge code).
  *
  * Implemented with @utility (not a plain class) so these compose exactly
  * like any Tailwind utility — safe to combine with color/spacing
@@ -284,4 +284,78 @@ body {
   line-height: 1;
   font-weight: 700;
   letter-spacing: 0.01em;
+}
+
+/* ---------------------------------------------------------------------
+ * Blog article body — added for the /blog content engine (zero-budget
+ * distribution system, Sept 2026). Plain semantic styling for the raw
+ * HTML rendered from Markdown articles, reusing the existing tokens
+ * above rather than pulling in a Tailwind typography plugin (none is
+ * installed, and this stays smaller and easier to reason about).
+ * Deliberately restrained per the same Rams lens as the rest of the
+ * system — no decoration beyond making long-form text readable.
+ * ------------------------------------------------------------------- */
+
+.article-body {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+.article-body h2 {
+  margin-top: 2em;
+  margin-bottom: 0.5em;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.article-body h3 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.article-body p {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+.article-body ul,
+.article-body ol {
+  margin-top: 1em;
+  margin-bottom: 1em;
+  padding-left: 1.5em;
+}
+.article-body ul {
+  list-style-type: disc;
+}
+.article-body ol {
+  list-style-type: decimal;
+}
+.article-body li {
+  margin-top: 0.4em;
+}
+.article-body a {
+  color: var(--signal);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+.article-body a:hover {
+  color: var(--signal-hover);
+}
+.article-body strong {
+  font-weight: 600;
+}
+.article-body code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--paper);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+}
+.article-body blockquote {
+  margin: 1.5em 0;
+  padding-left: 1em;
+  border-left: 2px solid var(--border-control);
+  color: var(--ink-secondary);
 }
