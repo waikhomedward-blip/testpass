@@ -2,16 +2,60 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
 
+const SITE_URL = "https://testpass.me";
+const SITE_DESCRIPTION =
+  "TestPass sends the seller a short, guided test of the actual used device — not another AI guess from listing photos.";
+
 export const metadata: Metadata = {
-  title: "TestPass — Test it before you pay",
-  description:
-    "TestPass sends the seller a short, guided test of the actual used device — not another AI guess from listing photos.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "TestPass — Test it before you pay",
+    template: "%s | TestPass",
+  },
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    type: "website",
+    siteName: "TestPass",
+    title: "TestPass — Test it before you pay",
+    description: SITE_DESCRIPTION,
+    url: SITE_URL,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "TestPass — Test it before you pay",
+    description: SITE_DESCRIPTION,
+  },
+};
+
+// Organization + WebSite JSON-LD, per Phase 2 of the zero-budget
+// distribution brief: gives search engines an unambiguous entity to tie
+// every page's structured data back to, without duplicating it per page.
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "TestPass",
+  url: SITE_URL,
+};
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "TestPass",
+  url: SITE_URL,
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
         <header className="border-b border-border-subtle">
           <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
             {/* Wordmark uses the approved chassis (Direction C, "Signal &
@@ -57,6 +101,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               we&apos;ll make it right.
             </p>
             <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+              <Link href="/blog" className="hover:text-signal hover:underline">
+                Blog
+              </Link>
               <Link href="/privacy" className="hover:text-signal hover:underline">
                 Privacy
               </Link>
@@ -64,7 +111,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 Terms
               </Link>
               <Link href="/contact" className="hover:text-signal hover:underline">
-              Contact
+                Contact
               </Link>
             </p>
           </div>
