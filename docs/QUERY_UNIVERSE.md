@@ -155,9 +155,9 @@ published / needs-update.
   18/20, transaction proximity 12/15, search signal 6/10, SERP/content gap 8/10, freshness 5/5,
   0 penalties) — search signal capped since no Search Console data exists yet to confirm true
   search volume
-- Status: drafting (draft article committed 2026-09-06,
-  `content/blog/buying-used-dji-drone-check-account-binding.md`, GREATS 29/30 — pending
-  founder approval before `status: published`)
+- Status: published (article live 2026-09-06 at
+  `content/blog/buying-used-dji-drone-check-account-binding.md` / testpass.me/blog/buying-used-dji-drone-check-account-binding,
+  GREATS 29/30, founder-approved)
 - Mapped content: "used DJI drone account-binding check" explainer
 
 ## Category failure-mode index (source: `src/lib/primitives.ts`, current as of 2026-09-05)
@@ -208,3 +208,5 @@ the product's own prompts cap this at MODERATE and use the word "risk," not "gua
   two verified real threads (~Jun/Jul 2026, URLs above). Added Cluster 6 (DJI account-binding)
   from the automated content-pipeline run; draft article committed pending founder approval.
   Logged the Switch 2 error-2124-4508 lead to the research backlog.
+- 2026-09-06 — founder approved Cluster 6's draft article; flipped to `status: published` and
+  it is now live on testpass.me. Cluster 6's status line updated to reflect publication.
