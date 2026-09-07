@@ -3,6 +3,17 @@ import Link from "next/link";
 import "./globals.css";
 import { PostHogProvider } from "@/components/PostHogProvider";
 
+// Wave 2 — homepage editorial pass. The one serif in the system, reserved
+// for the marketing hero's H1 (see type-display's font-family in
+// globals.css) — every other screen in the product stays the plain sans
+// system this file already sets as the document default. Loaded via a
+// plain <link> (below, in the returned <head>) rather than next/font/google
+// — next/font fetches and self-hosts the font file at *build* time, which
+// needs an unrestricted connection to fonts.googleapis.com from wherever
+// the build runs; a plain stylesheet link only ever needs that connection
+// from the visitor's own browser at *render* time, which is the strictly
+// safer dependency for a production build pipeline.
+
 const SITE_URL = "https://testpass.me";
 const SITE_DESCRIPTION =
   "TestPass sends the seller a short, guided test of the actual used device — not another AI guess from listing photos.";
@@ -48,6 +59,14 @@ const websiteJsonLd = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className="h-full antialiased">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&display=swap"
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <PostHogProvider>
         <script
