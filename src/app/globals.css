@@ -213,10 +213,10 @@ as machine-generated metadata rather than a heading. */
  * system stop looking like a system. Eight explicit roles, each with one
  * job:
  *
- * display             — not yet used anywhere in-product (no marketing hero
- *                        exists), reserved for if one ever does. Largest text
- *                        in the system by definition, so it's defined once
- *                        here rather than invented ad hoc if that day comes.
+ * display             — Wave 1.2: now in use for the homepage H1, the one
+ *                        marketing hero in the product. Largest text in the
+ *                        system by definition, so it was defined once here
+ *                        rather than invented ad hoc when that day came.
  * type-page-title      — the one H1 per screen ("Test a GoPro", "My tests").
  * type-section-title   — a named subsection within a screen (e.g. "Send
  *                        this link to the seller").
@@ -358,4 +358,30 @@ as machine-generated metadata rather than a heading. */
   padding-left: 1em;
   border-left: 2px solid var(--border-control);
   color: var(--ink-secondary);
+}
+
+/* ---------------------------------------------------------------------
+ * TestPass Visual System — Wave 1.2 homepage polish.
+ *
+ * One considered entrance for the two above-the-fold blocks on first
+ * paint — not a scroll-triggered effect on every element, which would
+ * read as decoration rather than sequence. A short rise-and-fade, the
+ * same restraint as everything else in this file: it introduces the
+ * page in order once, then gets out of the way. Respects
+ * prefers-reduced-motion via the existing global override above (which
+ * forces animation-duration to ~0), so no separate handling is needed
+ * here.
+ * ------------------------------------------------------------------- */
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.reveal {
+  animation: reveal 0.5s ease-out both;
 }
