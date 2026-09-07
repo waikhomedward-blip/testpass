@@ -37,8 +37,9 @@ published / needs-update.
   distinguish signal from noise per category — genuinely original framing, not a rehash
 - Priority: 78/100 — high pain recurrence, strong fit, real content gap (most guides list 15
   generic checks; almost none say "here's the one that actually predicts failure")
-- Status: researching
-- Mapped content: cornerstone "used camera buying checklist" guide (not yet drafted)
+- Status: published (article live at content/blog/what-to-actually-check-before-buying-a-used-camera.md
+  — this ledger's status line was never flipped when the article shipped; corrected 2026-09-07)
+- Mapped content: cornerstone "used camera buying checklist" guide — published
 
 ## Cluster 2 — "How to test used [handheld] before buying / stick drift"
 
@@ -65,9 +66,11 @@ published / needs-update.
   paraphrased forum advice
 - Priority: 86/100 — highest transaction proximity of any cluster (people posting are actively
   mid-purchase), strong TestPass fit, genuine content gap (forum answers are inconsistent)
-- Status: researching
+- Status: published (article live at
+  content/blog/check-stick-drift-before-buying-used-switch-steam-deck-rog-ally.md — this
+  ledger's status line was never flipped when the article shipped; corrected 2026-09-07)
 - Mapped content: cornerstone "stick drift" guide covering all three handhelds/consoles, one
-  page, cross-linked — do not split into three near-duplicate pages (cannibalization risk)
+  page, cross-linked — published, not split into three near-duplicate pages
 
 ## Cluster 3 — "Seller says it works, how do I verify" / proof vs. claim
 
@@ -82,9 +85,10 @@ published / needs-update.
 - Unique evidence advantage: TestPass is itself the answer, not just content about the problem
 - Priority: 74/100 — capped below Cluster 2 until corroborating search/community evidence
   exists (SERP/content-gap and search-signal points withheld pending evidence)
-- Status: researching
-- Mapped content: "checklist vs evidence" explainer (brief's content family #6) — do not launch
-  with pure product pitch; must be genuinely useful independent of TestPass
+- Status: published (article live at content/blog/seller-says-it-works-how-to-verify.md — this
+  ledger's status line was never flipped when the article shipped; corrected 2026-09-07)
+- Mapped content: "checklist vs evidence" explainer (brief's content family #6) — published,
+  genuinely useful independent of TestPass, product mention confined to the closing section
 
 ## Cluster 4 — Console online-access / ban risk before buying (PS5, Xbox, Switch)
 
@@ -101,9 +105,10 @@ published / needs-update.
   challenge can prove
 - Priority: 68/100 — real pain and fit, but penalized slightly for evidence/trust risk (must be
   written very carefully to match the product's own honest capability labels)
-- Status: researching
+- Status: published (article live at content/blog/buying-used-ps5-xbox-check-console-ban-risk.md
+  — this ledger's status line was never flipped when the article shipped; corrected 2026-09-07)
 - Mapped content: "console ban-risk check" explainer, PS5 + Xbox together, explicit about
-  EXPERIMENTAL status and what MODERATE association actually means for a buyer
+  EXPERIMENTAL status and what MODERATE association actually means for a buyer — published
 
 ## Cluster 5 — Marketplace meetup vs. shipped-purchase guidance
 
@@ -119,8 +124,11 @@ published / needs-update.
   route shipped/pay-first scenarios to TestPass rather than force-fit every visitor
 - Priority: 41/100 — real search volume likely, but capped hard on TestPass fit per the
   priority formula; do not inflate by pretending TestPass serves meetups equally well
-- Status: researching
-- Mapped content: none yet — lower priority than Clusters 1-4
+- Status: published (article live at
+  content/blog/buying-used-electronics-locally-meetup-vs-shipped.md — this ledger's status line
+  was never flipped when the article shipped; corrected 2026-09-07)
+- Mapped content: honest meetup-advantage explainer, published — does not force-fit a TestPass
+  pitch onto a segment the product isn't primarily built for
 
 ## Cluster 6 — DJI drone account-binding / activation lock on a used drone
 
@@ -159,6 +167,40 @@ published / needs-update.
   `content/blog/buying-used-dji-drone-check-account-binding.md` / testpass.me/blog/buying-used-dji-drone-check-account-binding,
   GREATS 29/30, founder-approved)
 - Mapped content: "used DJI drone account-binding check" explainer
+
+## Cluster 7 — Used NAS drive health / Power-On Hours before buying
+
+- Raw examples: "how to check used NAS hard drives before buying", "synology used drive power
+  on hours", "how to tell if a hard drive is really new", "buying used NAS what to check"
+- Category: nas (EXPERIMENTAL)
+- Intent: verification — the enclosure looks fine, buyer has no way to see the drives' actual
+  wear from photos or a listing description
+- Funnel stage: consideration → decision
+- Source: proposed and drafted 2026-09-07 by the automated content pipeline. Real buyer pain and
+  acceptable-hours discussion from a Tom's Hardware Forum thread ("Thinking of buying a used
+  HDD. Are these S.M.A.R.T. values within reason?",
+  https://forums.tomshardware.com/threads/thinking-of-buying-a-used-hdd-are-these-s-m-a-r-t-values-within-reason.3633149/
+  — genuine used-drive purchase question, replies citing a ~40,000-60,000 hour typical HDD
+  lifespan). DSM navigation steps corroborated against ewall.store's Synology DSM guide
+  (https://www.ewall.store/gb/blog/storage/how-to-check-hard-drive-usage-time-in-synology-dsm)
+  and How-To Geek's S.M.A.R.T. explainer
+  (https://www.howtogeek.com/134735/check-ssd-or-hdd-health-with-smart/). Reddit-specific
+  corroboration was not found this pass (WebSearch surfaced mostly eBay listings for
+  NAS/drive-specific queries, not engaged threads) — same honest gap already flagged for
+  Cluster 6's Reddit sourcing; worth another pass once Search Console/community data exists.
+- Pain paraphrase: a used NAS enclosure can look brand new while the drives inside are years
+  into their working life, and a seller who never checked won't know to mention it
+- TestPass fit: strong — matches the NAS category's own documented failure mode ("one or more
+  drives inside the enclosure silently failing or degraded") in src/lib/primitives.ts
+- Unique evidence advantage: TestPass's NAS test has the seller rename the DSM server to a
+  one-time code and screenshot Storage Manager's own Healthy/Warning/Critical read next to it —
+  genuinely TestPass-specific, not paraphrased forum advice
+- Priority: 80/100 (recurrence/severity 16/20, TestPass fit 18/20, unique evidence advantage
+  17/20, transaction proximity 12/15, search signal 6/10, SERP/content-gap 8/10, freshness 5/5,
+  minus 2 for the missing Reddit-specific corroboration)
+- Status: published (article live 2026-09-07 at
+  content/blog/buying-used-nas-check-drive-power-on-hours.md, founder approval pending via PR)
+- Mapped content: "used NAS drive-hours check" explainer
 
 ## Category failure-mode index (source: `src/lib/primitives.ts`, current as of 2026-09-05)
 
@@ -210,3 +252,8 @@ the product's own prompts cap this at MODERATE and use the word "risk," not "gua
   Logged the Switch 2 error-2124-4508 lead to the research backlog.
 - 2026-09-06 — founder approved Cluster 6's draft article; flipped to `status: published` and
   it is now live on testpass.me. Cluster 6's status line updated to reflect publication.
+- 2026-09-07 — corrected Clusters 1, 2, 3, 4, and 5: all five had shipped articles sitting in
+  content/blog/ with `status: published` in their frontmatter, but this ledger's own status
+  lines were never flipped from "researching" — this file had drifted out of sync with the
+  actual content directory. Added Cluster 7 (used NAS drive Power-On Hours) from the automated
+  content-pipeline run; draft article committed pending founder approval via PR.
