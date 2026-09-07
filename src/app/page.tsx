@@ -24,24 +24,59 @@ const HOW_IT_WORKS = [
   },
 ];
 
+// Wave 2 — homepage editorial pass. Large-scale renders of the same
+// CategoryIcon glyphs used (small, functional) in the category grid below
+// — not stock photography or a new illustration set, but the product's
+// own real device iconography, blown up and arranged like a scattered
+// photo collage. Deliberately confined to a right-hand gutter that only
+// exists at lg+ (the text column stays max-w-2xl inside a max-w-5xl page,
+// which leaves real empty space to its right on a wide screen) so these
+// can never overlap the headline or collide with each other at any
+// viewport — restrained placement over a wider spread of icons. Each is
+// aria-hidden and pointer-events-none: pure atmosphere, no information a
+// screen reader or pointer needs to reach here that isn't already in the
+// category grid with its own visible label.
+const HERO_GLYPHS: { category: Parameters<typeof CategoryIcon>[0]["category"]; className: string }[] = [
+  { category: "dji", className: "absolute right-6 top-0 h-24 w-24 -rotate-[10deg] text-signal/15" },
+  { category: "switch", className: "absolute right-32 top-36 h-14 w-14 rotate-[8deg] text-ink/10" },
+  { category: "ps5", className: "absolute right-0 top-64 h-20 w-20 -rotate-[6deg] text-signal/12" },
+  { category: "steamdeck", className: "absolute right-40 top-[19rem] h-16 w-16 rotate-[4deg] text-ink/8" },
+];
+
 export default function Home() {
   return (
     <div className="mx-auto w-full max-w-5xl flex-1 px-6 py-16">
-      <div className="reveal max-w-2xl">
-        {/* The one dominant idea, per the Jobs test — everything else on
-            this screen exists to get out of the way of it. The blue rule
-            is the same structural mark the wordmark uses, not a new motif. */}
-        <span className="block h-[3px] w-9 bg-signal" aria-hidden="true" />
-        {/* type-display is the marketing-hero role reserved in globals.css
-            for exactly this — the one H1 that isn't a page-title. Sized up
-            further at wider viewports (the utility itself is a fixed 40px)
-            so the headline still leads the page on a desktop-width screen. */}
-        <h1 className="type-display mt-4 sm:text-[52px] lg:text-[60px]">Test it before you pay.</h1>
-        <p className="mt-5 max-w-xl text-lg text-ink-secondary">
-          The seller says it works. TestPass sends a short, guided test to the actual device — the
-          seller taps one link, no account, no install, about one to two minutes — and reports only
-          what the evidence supports.
-        </p>
+      {/* min-h reserves real vertical room (lg+ only, matching the glyphs'
+          own lg:block gate) for the scattered-glyph spread below — without
+          it, the absolutely-positioned glyphs would render past the text
+          block's natural height and bleed into the How it works section. */}
+      <div className="relative lg:min-h-[24rem]">
+        <div className="reveal relative z-10 max-w-2xl">
+          {/* The one dominant idea, per the Jobs test — everything else on
+              this screen exists to get out of the way of it. The blue rule
+              is the same structural mark the wordmark uses, not a new motif. */}
+          <span className="block h-[3px] w-9 bg-signal" aria-hidden="true" />
+          {/* type-display is the marketing-hero role reserved in globals.css
+              for exactly this — the one H1 that isn't a page-title. Sized up
+              further at wider viewports (the utility itself is a fixed 40px)
+              so the headline still leads the page on a desktop-width screen.
+              The <em> renders in the serif's real italic — see type-display's
+              nested rule in globals.css — as the one word of emphasis. */}
+          <h1 className="type-display mt-4 sm:text-[52px] lg:text-[64px]">
+            Test it <em>before</em> you pay.
+          </h1>
+          <p className="mt-5 max-w-xl text-lg text-ink-secondary">
+            The seller says it works. TestPass sends a short, guided test to the actual device — the
+            seller taps one link, no account, no install, about one to two minutes — and reports only
+            what the evidence supports.
+          </p>
+        </div>
+
+        <div className="pointer-events-none absolute inset-0 hidden lg:block" aria-hidden="true">
+          {HERO_GLYPHS.map((glyph) => (
+            <CategoryIcon key={glyph.category} category={glyph.category} className={glyph.className} />
+          ))}
+        </div>
       </div>
 
       <div

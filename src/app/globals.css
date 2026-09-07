@@ -101,6 +101,11 @@
   --shadow-raised: var(--shadow-raised);
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, "SFMono-Regular", Menlo, monospace;
+  /* Wave 2: the one serif in the system — see the note in layout.tsx on why
+  this loads via a <link> rather than next/font/google. Georgia is the
+  fallback stack so a slow font load never bumps layout much, since
+  Georgia's metrics are reasonably close to Newsreader's. */
+  --font-serif: "Newsreader", Georgia, "Times New Roman", serif;
 }
 
 /* Wave 1.1: private beta is deliberately light-only. An earlier checkpoint
@@ -213,10 +218,16 @@ as machine-generated metadata rather than a heading. */
  * system stop looking like a system. Eight explicit roles, each with one
  * job:
  *
- * display             — Wave 1.2: now in use for the homepage H1, the one
- *                        marketing hero in the product. Largest text in the
- *                        system by definition, so it was defined once here
- *                        rather than invented ad hoc when that day came.
+ * display             — the homepage H1, the one marketing hero in the
+ *                        product. Largest text in the system by definition,
+ *                        so it was defined once here rather than invented
+ *                        ad hoc when that day came. Wave 2: set in the
+ *                        serif (Newsreader) rather than the system sans —
+ *                        the one deliberate typographic accent in the
+ *                        product, reserved for exactly this one H1 so it
+ *                        reads as a considered choice, not a second type
+ *                        system. An <em> inside it (see page.tsx) renders
+ *                        the serif's real italic, not a faux-oblique sans.
  * type-page-title      — the one H1 per screen ("Test a GoPro", "My tests").
  * type-section-title   — a named subsection within a screen (e.g. "Send
  *                        this link to the seller").
@@ -234,10 +245,17 @@ as machine-generated metadata rather than a heading. */
  * ------------------------------------------------------------------- */
 
 @utility type-display {
+  font-family: var(--font-serif);
   font-size: 40px;
-  line-height: 1.1;
-  font-weight: 800;
-  letter-spacing: -0.015em;
+  line-height: 1.08;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+
+  & em {
+    font-style: italic;
+    font-weight: 500;
+    color: var(--signal);
+  }
 }
 
 @utility type-page-title {
