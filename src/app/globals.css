@@ -54,8 +54,8 @@
   inside a colored chip on both themes. */
   --proof: #0d7a53;
   --proof-wash: #0d7a531a;
-  --caution: #9a5a00;
-  --caution-wash: #9a5a001a;
+  --caution: #9c6300; /* Wave 1.2: shifted from #9a5a00 after a deuteranopia simulation (Machado/Oliveira/Fairchild) showed caution and failure collapsing toward each other for red-green colorblind users. This hue/lightness keeps AA text contrast (4.51:1 on --paper, 5.00:1 on --card) while roughly doubling the simulated separation from --failure (15.5→20.6) — status is never color-alone in this product (see the note above), so this is a headroom improvement, not a fix to a broken read. */
+  --caution-wash: #9c63001a;
   --failure: #b42318;
   --failure-wash: #b423181a;
 
